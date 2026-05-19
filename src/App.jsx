@@ -23,7 +23,7 @@ export default function App() {
       {page === 'bio' && <Bio onBack={goBack} />}
       {page === 'art' && <Art onBack={goBack} />}
       {page === 'video' && <Video onBack={goBack} />}
-      {page === 'design' && <div style={{color:'white',display:'flex',alignItems:'center',justifyContent:'center',height:'100vh'}}>Design coming soon</div>}
+      {page === 'design' && <div style={{color:'white',display:'flex',alignItems:'center',justifyContent:'center',height:'100vh'}}></div>}
       {page === 'admin' && <Admin />}
       {page === 'design' && <Design onBack={goBack} />}
     </div>
