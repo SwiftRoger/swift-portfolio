@@ -4,6 +4,8 @@ import Admin from './pages/Admin'
 import Bio from './pages/Bio'
 import Art from './pages/Art'
 import Video from './pages/Video'
+import Design from './pages/Design'
+
 
 export default function App() {
   const isAdmin = window.location.pathname === '/admin' || window.location.hash === '#/admin'
@@ -23,6 +25,7 @@ export default function App() {
       {page === 'video' && <Video onBack={goBack} />}
       {page === 'design' && <div style={{color:'white',display:'flex',alignItems:'center',justifyContent:'center',height:'100vh'}}>Design coming soon</div>}
       {page === 'admin' && <Admin />}
+      {page === 'design' && <Design onBack={goBack} />}
     </div>
   )
 }
