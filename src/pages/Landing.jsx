@@ -75,28 +75,26 @@ function StationScene() {
       </mesh>
 
       {/* Wall-mounted lanterns — left */}
-      {[-10, -4, 2, 8].map(([z], i) =>
-        [[-11.5, 1.5, -10 + i * 5]].map(([x, y, zz], j) => (
-          <group key={`ll${i}`} position={[x, y, zz]}>
-            <mesh>
-              <boxGeometry args={[0.5, 0.7, 0.5]} />
-              <meshStandardMaterial color="#0c0a14" roughness={0.5} />
-            </mesh>
-            <mesh position={[0, 0, 0]}>
-              <boxGeometry args={[0.32, 0.5, 0.32]} />
-              <meshStandardMaterial color="#e8c870" emissive="#c08020" emissiveIntensity={0.35} transparent opacity={0.5} />
-            </mesh>
-            <pointLight
-              ref={el => (lanternRefs.current[i] = el)}
-              position={[0.6, 0, 0]}
-              intensity={0.5}
-              distance={7}
-              color="#c07818"
-              decay={2}
-            />
-          </group>
-        ))
-      )}
+      {[0, 1, 2, 3].map((i) => (
+        <group key={`ll${i}`} position={[-11.5, 1.5, -10 + i * 5]}>
+          <mesh>
+            <boxGeometry args={[0.5, 0.7, 0.5]} />
+            <meshStandardMaterial color="#0c0a14" roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 0, 0]}>
+            <boxGeometry args={[0.32, 0.5, 0.32]} />
+            <meshStandardMaterial color="#e8c870" emissive="#c08020" emissiveIntensity={0.35} transparent opacity={0.5} />
+          </mesh>
+          <pointLight
+            ref={el => (lanternRefs.current[i] = el)}
+            position={[0.6, 0, 0]}
+            intensity={0.5}
+            distance={7}
+            color="#c07818"
+            decay={2}
+          />
+        </group>
+      ))}
 
       {/* Wall-mounted lanterns — right */}
       {[0, 1, 2, 3].map((i) => (
