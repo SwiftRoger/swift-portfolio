@@ -1,517 +1,602 @@
-import { useRef, useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Fog, MeshStandardMaterial } from 'three'
 import * as THREE from 'three'
 
-const SECTIONS = [
-  { id: 'bio', label: 'BIO', sublabel: '// WHO I AM', exit: 1, position: [-6, 0, -8] },
-  { id: 'art', label: 'ART', sublabel: '// ILLUSTRATIONS', exit: 2, position: [6, 0, -8] },
-  { id: 'videos', label: 'VIDEO', sublabel: '// MOTION', exit: 3, position: [-6, 0, -20] },
-  { id: 'design', label: 'DESIGN', sublabel: '// GRAPHICS', exit: 4, position: [6, 0, -20] },
-]
+// ── 3D SCENE ─────────────────────────────────────────────────────────────────
 
-function StationGeometry() {
-  const floorRef = useRef()
-  const ceilingRef = useRef()
+function StationScene() {
+  const lanternRefs = useRef([])
+
+  useFrame((state) => {
+    lanternRefs.current.forEach((ref, i) => {
+      if (ref) {
+        ref.intensity =
+          0.5 + Math.sin(state.clock.elapsedTime * (2.5 + i * 0.4)) * 0.12 +
+          Math.sin(state.clock.elapsedTime * (6 + i * 0.7)) * 0.04
+      }
+    })
+  })
 
   return (
     <group>
-      {/* Floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -3, -15]} receiveShadow>
-        <planeGeometry args={[30, 60]} />
-        <meshStandardMaterial color="#0a0a0a" roughness={0.1} metalness={0.8} />
+      {/* Stone floor with subtle tile grid */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.5, 0]}>
+        <planeGeometry args={[60, 60]} />
+        <meshStandardMaterial color="#06050a" roughness={0.95} />
+      </mesh>
+      {Array.from({ length: 12 }).map((_, i) =>
+        Array.from({ length: 12 }).map((_, j) => (
+          <mesh key={`${i}${j}`} rotation={[-Math.PI / 2, 0, 0]} position={[(i - 6) * 3, -2.49, (j - 6) * 3]}>
+            <planeGeometry args={[2.95, 2.95]} />
+            <meshStandardMaterial color={`hsl(260, 8%, ${2.5 + ((i + j) % 2) * 0.8}%)`} roughness={0.92} />
+          </mesh>
+        ))
+      )}
+
+      {/* Vaulted ceiling */}
+      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 8, 0]}>
+        <planeGeometry args={[60, 60]} />
+        <meshStandardMaterial color="#040309" roughness={1} />
       </mesh>
 
-      {/* Floor grid lines */}
-      {Array.from({ length: 20 }).map((_, i) => (
-        <mesh key={`fl${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.98, -i * 3]}>
-          <planeGeometry args={[30, 0.02]} />
-          <meshStandardMaterial color="#1a1a1a" />
+      {/* Stone arch ribs along ceiling */}
+      {Array.from({ length: 7 }).map((_, i) => (
+        <mesh key={`rib${i}`} position={[0, 7.2, -8 + i * 4]}>
+          <boxGeometry args={[26, 0.25, 0.18]} />
+          <meshStandardMaterial color="#0d0b14" roughness={1} />
         </mesh>
       ))}
-      {Array.from({ length: 10 }).map((_, i) => (
-        <mesh key={`fw${i}`} rotation={[-Math.PI / 2, 0, Math.PI / 2]} position={[(i - 5) * 3, -2.98, -30]}>
-          <planeGeometry args={[60, 0.02]} />
-          <meshStandardMaterial color="#1a1a1a" />
-        </mesh>
-      ))}
 
-      {/* Ceiling */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 5, -15]}>
-        <planeGeometry args={[30, 60]} />
-        <meshStandardMaterial color="#050505" roughness={1} />
+      {/* Side walls */}
+      <mesh position={[-12, 3, 0]}>
+        <boxGeometry args={[0.2, 14, 60]} />
+        <meshStandardMaterial color="#070610" roughness={1} />
+      </mesh>
+      <mesh position={[12, 3, 0]}>
+        <boxGeometry args={[0.2, 14, 60]} />
+        <meshStandardMaterial color="#070610" roughness={1} />
       </mesh>
 
-      {/* Left wall */}
-      <mesh position={[-12, 1, -15]}>
-        <boxGeometry args={[0.3, 10, 60]} />
-        <meshStandardMaterial color="#0d0d0d" roughness={0.9} />
+      {/* Back wall */}
+      <mesh position={[0, 3, -16]}>
+        <boxGeometry args={[24, 14, 0.2]} />
+        <meshStandardMaterial color="#060510" roughness={1} />
       </mesh>
 
-      {/* Right wall */}
-      <mesh position={[12, 1, -15]}>
-        <boxGeometry args={[0.3, 10, 60]} />
-        <meshStandardMaterial color="#0d0d0d" roughness={0.9} />
+      {/* Platform edge strip — left */}
+      <mesh position={[-5, -2.42, 0]}>
+        <boxGeometry args={[0.12, 0.08, 50]} />
+        <meshStandardMaterial color="#1a1530" emissive="#100a20" emissiveIntensity={0.4} />
+      </mesh>
+      {/* Platform edge strip — right */}
+      <mesh position={[5, -2.42, 0]}>
+        <boxGeometry args={[0.12, 0.08, 50]} />
+        <meshStandardMaterial color="#1a1530" emissive="#100a20" emissiveIntensity={0.4} />
       </mesh>
 
-      {/* Arch supports along the ceiling */}
-      {Array.from({ length: 8 }).map((_, i) => (
-        <group key={`arch${i}`} position={[0, 0, -i * 7]}>
-          <mesh position={[-10, 3, 0]}>
-            <boxGeometry args={[4, 0.3, 0.4]} />
-            <meshStandardMaterial color="#111" roughness={0.8} />
-          </mesh>
-          <mesh position={[10, 3, 0]}>
-            <boxGeometry args={[4, 0.3, 0.4]} />
-            <meshStandardMaterial color="#111" roughness={0.8} />
-          </mesh>
-          <mesh position={[0, 4.5, 0]}>
-            <boxGeometry args={[24, 0.3, 0.4]} />
-            <meshStandardMaterial color="#0f0f0f" roughness={0.8} />
-          </mesh>
-          {/* Vertical pillars */}
-          <mesh position={[-11.5, 1, 0]}>
-            <boxGeometry args={[0.4, 8, 0.4]} />
-            <meshStandardMaterial color="#111" roughness={0.8} />
-          </mesh>
-          <mesh position={[11.5, 1, 0]}>
-            <boxGeometry args={[0.4, 8, 0.4]} />
-            <meshStandardMaterial color="#111" roughness={0.8} />
-          </mesh>
-        </group>
-      ))}
+      {/* Wall-mounted lanterns — left */}
+      {[-10, -4, 2, 8].map(([z], i) =>
+        [[-11.5, 1.5, -10 + i * 5]].map(([x, y, zz], j) => (
+          <group key={`ll${i}`} position={[x, y, zz]}>
+            <mesh>
+              <boxGeometry args={[0.5, 0.7, 0.5]} />
+              <meshStandardMaterial color="#0c0a14" roughness={0.5} />
+            </mesh>
+            <mesh position={[0, 0, 0]}>
+              <boxGeometry args={[0.32, 0.5, 0.32]} />
+              <meshStandardMaterial color="#e8c870" emissive="#c08020" emissiveIntensity={0.35} transparent opacity={0.5} />
+            </mesh>
+            <pointLight
+              ref={el => (lanternRefs.current[i] = el)}
+              position={[0.6, 0, 0]}
+              intensity={0.5}
+              distance={7}
+              color="#c07818"
+              decay={2}
+            />
+          </group>
+        ))
+      )}
 
-      {/* Platform edge */}
-      <mesh position={[0, -2.7, -15]}>
-        <boxGeometry args={[24, 0.1, 60]} />
-        <meshStandardMaterial color="#151515" roughness={0.3} metalness={0.5} />
-      </mesh>
-
-      {/* Yellow safety line */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.64, -15]}>
-        <planeGeometry args={[0.15, 60]} />
-        <meshStandardMaterial color="#2a2a2a" />
-      </mesh>
-
-      {/* Ceiling strip lights - dim and eerie */}
-      {Array.from({ length: 6 }).map((_, i) => (
-        <group key={`light${i}`} position={[0, 4.6, -i * 9 - 3]}>
+      {/* Wall-mounted lanterns — right */}
+      {[0, 1, 2, 3].map((i) => (
+        <group key={`rl${i}`} position={[11.5, 1.5, -10 + i * 5]}>
           <mesh>
-            <boxGeometry args={[0.15, 0.05, 4]} />
-            <meshStandardMaterial color="#ccc" emissive="#aaa" emissiveIntensity={0.3} />
+            <boxGeometry args={[0.5, 0.7, 0.5]} />
+            <meshStandardMaterial color="#0c0a14" roughness={0.5} />
           </mesh>
-          <pointLight intensity={0.4} distance={12} color="#e8e8e0" decay={2} />
+          <mesh>
+            <boxGeometry args={[0.32, 0.5, 0.32]} />
+            <meshStandardMaterial color="#e8c870" emissive="#c08020" emissiveIntensity={0.35} transparent opacity={0.5} />
+          </mesh>
+          <pointLight
+            ref={el => (lanternRefs.current[4 + i] = el)}
+            position={[-0.6, 0, 0]}
+            intensity={0.5}
+            distance={7}
+            color="#c07818"
+            decay={2}
+          />
         </group>
       ))}
 
-      {/* Flickering single lights in distance */}
-      <pointLight position={[-8, 2, -35]} intensity={0.2} distance={8} color="#fff" />
-      <pointLight position={[8, 2, -42]} intensity={0.15} distance={6} color="#ddd" />
+      {/* Floating ash particles */}
+      {Array.from({ length: 30 }).map((_, i) => (
+        <AshParticle key={i} index={i} />
+      ))}
+
+      {/* Overhead dim lights */}
+      {[-6, 0, 6].map((z, i) => (
+        <pointLight key={i} position={[0, 6, z]} intensity={0.1} distance={12} color="#9070ff" decay={2} />
+      ))}
+
+      <ambientLight intensity={0.009} color="#2a1a40" />
     </group>
   )
 }
 
-function ExitTunnel({ section, onClick, hovered, onHover, onUnhover }) {
-  const groupRef = useRef()
-  const signRef = useRef()
-  const [flicker, setFlicker] = useState(1)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.85) {
-        setFlicker(Math.random() * 0.3 + 0.7)
-        setTimeout(() => setFlicker(1), 80)
-      }
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [])
+function AshParticle({ index }) {
+  const ref = useRef()
+  const seed = index * 137.508
+  const x0 = ((seed % 20) - 10)
+  const z0 = ((seed * 1.3) % 24) - 12
+  const speed = 0.04 + (index % 7) * 0.008
+  const drift = (index % 3) * 0.015
 
   useFrame((state) => {
-    if (signRef.current) {
-      signRef.current.material.emissiveIntensity = hovered
-        ? 0.9 + Math.sin(state.clock.elapsedTime * 4) * 0.1
-        : 0.4 * flicker
-    }
+    if (!ref.current) return
+    const t = state.clock.elapsedTime
+    ref.current.position.y = (((-t * speed + index * 0.7) % 6) + 6) % 6 - 2.5
+    ref.current.position.x = x0 + Math.sin(t * drift + index) * 0.4
+    ref.current.position.z = z0
+    ref.current.material.opacity = 0.06 + Math.sin(t * 0.5 + index) * 0.03
   })
 
-  const [x, y, z] = section.position
-
   return (
-    <group ref={groupRef} position={[x, y, z]}>
-      {/* Tunnel entrance arch */}
-      <mesh position={[0, 1.5, 0]}>
-        <boxGeometry args={[4, 5, 0.3]} />
-        <meshStandardMaterial color="#080808" roughness={1} />
-      </mesh>
-      {/* Tunnel hole */}
-      <mesh position={[0, 1, 0.1]}>
-        <boxGeometry args={[3, 3.5, 0.1]} />
-        <meshStandardMaterial color="#000" />
-      </mesh>
-      {/* Deep tunnel illusion */}
-      <mesh position={[0, 1, -3]}>
-        <boxGeometry args={[2.8, 3.3, 6]} />
-        <meshStandardMaterial color="#020202" side={THREE.BackSide} />
-      </mesh>
-
-      {/* Exit sign */}
-      <mesh
-        ref={signRef}
-        position={[0, 3.8, 0.2]}
-        onClick={onClick}
-        onPointerOver={onHover}
-        onPointerOut={onUnhover}
-      >
-        <boxGeometry args={[3.2, 0.7, 0.08]} />
-        <meshStandardMaterial
-          color="#111"
-          emissive="#e8e8e0"
-          emissiveIntensity={0.4}
-        />
-      </mesh>
-
-      {/* Exit number */}
-      <pointLight
-        position={[0, 2, 1]}
-        intensity={hovered ? 1.5 : 0.5}
-        distance={8}
-        color="#ffffff"
-      />
-    </group>
+    <mesh ref={ref} position={[x0, 3, z0]}>
+      <sphereGeometry args={[0.018, 4, 4]} />
+      <meshBasicMaterial color="#c0b0e0" transparent opacity={0.06} />
+    </mesh>
   )
 }
 
-function CameraRig({ target, transitioning, onTransitionEnd }) {
-  const { camera } = useThree()
-  const progress = useRef(0)
-  const startPos = useRef(new THREE.Vector3())
-  const startLook = useRef(new THREE.Vector3())
-
-  useEffect(() => {
-    if (transitioning) {
-      progress.current = 0
-      startPos.current.copy(camera.position)
-    }
-  }, [transitioning])
-
-  useFrame((state, delta) => {
-    if (!transitioning) {
-      // Gentle idle sway
-      camera.position.x += (Math.sin(state.clock.elapsedTime * 0.3) * 0.3 - camera.position.x) * 0.02
-      camera.position.y += (Math.sin(state.clock.elapsedTime * 0.2) * 0.1 - camera.position.y) * 0.02
-      camera.lookAt(0, 0, -10)
-      return
-    }
-
-    progress.current = Math.min(progress.current + delta * 0.8, 1)
-    const t = easeInCubic(progress.current)
-
-    if (target) {
-      camera.position.x += (target[0] - camera.position.x) * t * 0.1
-      camera.position.y += (target[1] + 1.6 - camera.position.y) * t * 0.1
-      camera.position.z += (target[2] + 2 - camera.position.z) * t * 0.1
-      camera.lookAt(target[0], target[1], target[2] - 10)
-    }
-
-    if (progress.current >= 1) {
-      onTransitionEnd()
-    }
+function CameraFloat() {
+  useFrame((state) => {
+    const t = state.clock.elapsedTime
+    state.camera.position.x = Math.sin(t * 0.07) * 0.4
+    state.camera.position.y = 0.5 + Math.sin(t * 0.05) * 0.15
+    state.camera.lookAt(0, -0.5, -6)
   })
-
   return null
 }
 
-function easeInCubic(t) {
-  return t * t * t
-}
-
-function FogController({ transitioning }) {
+function FogSetup() {
   const { scene } = useThree()
-
   useEffect(() => {
-    scene.fog = new THREE.FogExp2('#000000', transitioning ? 0.06 : 0.04)
+    scene.fog = new THREE.FogExp2('#06050a', 0.045)
     return () => { scene.fog = null }
-  }, [scene, transitioning])
-
+  }, [scene])
   return null
 }
 
-function GlitchOverlay({ active, label }) {
+// ── TUNNEL TRANSITION ─────────────────────────────────────────────────────────
+
+function TunnelTransition({ active, onComplete }) {
+  useEffect(() => {
+    if (active) {
+      const t = setTimeout(onComplete, 850)
+      return () => clearTimeout(t)
+    }
+  }, [active, onComplete])
   if (!active) return null
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 100,
-      background: '#000',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      animation: 'fadeOut 0.8s ease forwards',
-      animationDelay: '0.6s',
-    }}>
-      <div style={{
-        fontFamily: '"Space Mono", monospace',
-        fontSize: 'clamp(2rem, 8vw, 6rem)',
-        color: '#fff',
-        letterSpacing: '0.3em',
-        animation: 'glitch 0.4s steps(2) infinite',
-      }}>
-        {label}
-      </div>
-    </div>
+      position: 'fixed', inset: 0, zIndex: 500,
+      background: 'radial-gradient(ellipse at center, #1a0a30 0%, #000 60%)',
+      animation: 'tunnelIn 0.85s ease-in forwards',
+      pointerEvents: 'none',
+    }} />
   )
 }
 
+// ── PLATFORM DATA ─────────────────────────────────────────────────────────────
+
+const PLATFORMS = [
+  {
+    id: 'bio',
+    num: '01',
+    label: 'BIOGRAPHY',
+    kanji: '伝記',
+    desc: 'Origin. Memory. Self.',
+    color: '#c8b89a',
+    glow: 'rgba(200,184,154,0.08)',
+    border: 'rgba(200,184,154,0.18)',
+  },
+  {
+    id: 'art',
+    num: '02',
+    label: 'ART',
+    kanji: '芸術',
+    desc: 'Illustration & original works.',
+    color: '#d4a0b0',
+    glow: 'rgba(212,160,176,0.08)',
+    border: 'rgba(212,160,176,0.18)',
+  },
+  {
+    id: 'videos',
+    num: '03',
+    label: 'VIDEO',
+    kanji: '映像',
+    desc: 'Motion & recorded works.',
+    color: '#a0c0d4',
+    glow: 'rgba(160,192,212,0.08)',
+    border: 'rgba(160,192,212,0.18)',
+  },
+  {
+    id: 'design',
+    num: '04',
+    label: 'DESIGN',
+    kanji: '設計',
+    desc: 'Graphic & visual design.',
+    color: '#b0d4a8',
+    glow: 'rgba(176,212,168,0.08)',
+    border: 'rgba(176,212,168,0.18)',
+  },
+  {
+    id: 'story',
+    num: '05',
+    label: 'STORY',
+    kanji: '物語',
+    desc: 'Chronicles of the Land of Three.',
+    color: '#c8b89a',
+    glow: 'rgba(200,184,154,0.08)',
+    border: 'rgba(200,184,154,0.18)',
+  },
+  {
+    id: 'index',
+    num: '06',
+    label: 'INDEX',
+    kanji: '神社',
+    desc: 'Character shrine & compendium.',
+    color: '#c0b0ff',
+    glow: 'rgba(192,176,255,0.08)',
+    border: 'rgba(192,176,255,0.18)',
+  },
+  {
+    id: 'world',
+    num: '07',
+    label: 'WORLD',
+    kanji: '世界',
+    desc: 'Living map of the three realms.',
+    color: '#4080ff',
+    glow: 'rgba(64,128,255,0.08)',
+    border: 'rgba(64,128,255,0.18)',
+  },
+]
+
+// ── LANDING ───────────────────────────────────────────────────────────────────
+
 export default function Landing({ onEnter }) {
-  const [hoveredSection, setHoveredSection] = useState(null)
-  const [transitioning, setTransitioning] = useState(false)
-  const [transitionTarget, setTransitionTarget] = useState(null)
-  const [transitionLabel, setTransitionLabel] = useState('')
-  const [showGlitch, setShowGlitch] = useState(false)
+  const [hovered, setHovered] = useState(null)
+  const [tunneling, setTunneling] = useState(null)
+  const [ready, setReady] = useState(false)
 
-  const handleExitClick = (section) => {
-    if (transitioning) return
-    setTransitionLabel(section.label)
-    setTransitionTarget(section.position)
-    setTransitioning(true)
-    setShowGlitch(true)
-    setTimeout(() => {
-      if (section.id === 'bio') onEnter?.('bio')
-      else if (section.id === 'art') onEnter?.('art')
-      else if (section.id === 'videos') onEnter?.('video')
-      else if (section.id === 'design') onEnter?.('design')
-    }, 1400)
-  }
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 200)
+    return () => clearTimeout(t)
+  }, [])
 
-  const handleTransitionEnd = () => {
-    // camera reached target
+  const handleEnter = (id) => {
+    setTunneling(id)
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#000', position: 'relative', overflow: 'hidden', cursor: 'crosshair' }}>
+    <div style={{
+      width: '100vw', height: '100vh',
+      background: '#06050a',
+      position: 'relative',
+      overflow: 'hidden',
+      fontFamily: '"Space Mono", monospace',
+    }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Serif+JP:wght@300;400&display=swap');
-
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Serif+JP:wght@300;400;600&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        @keyframes glitch {
-          0% { transform: translate(0); clip-path: inset(0 0 80% 0); }
-          20% { transform: translate(-4px, 2px); clip-path: inset(20% 0 60% 0); }
-          40% { transform: translate(4px, -2px); clip-path: inset(40% 0 30% 0); filter: invert(1); }
-          60% { transform: translate(-2px, 4px); clip-path: inset(60% 0 10% 0); }
-          80% { transform: translate(2px, -4px); clip-path: inset(80% 0 0% 0); filter: none; }
-          100% { transform: translate(0); clip-path: inset(0); }
+        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-12px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes tunnelIn {
+          0% { opacity: 0; transform: scale(0.1) }
+          60% { opacity: 1 }
+          100% { opacity: 1; transform: scale(3) }
         }
-
-        @keyframes glitchFull {
-          0%, 100% { transform: translate(0) skew(0deg); opacity: 1; }
-          10% { transform: translate(-3px, 1px) skew(-1deg); opacity: 0.9; }
-          20% { transform: translate(3px, -1px) skew(1deg); }
-          30% { transform: translate(-1px, 3px); opacity: 0.95; }
-          40% { transform: translate(0) skew(0); }
-          85% { transform: translate(0); }
-          87% { transform: translate(-5px, 0) skew(-2deg); opacity: 0.8; }
-          89% { transform: translate(5px, 0) skew(2deg); }
-          91% { transform: translate(0); opacity: 1; }
+        @keyframes tickerScroll {
+          0% { transform: translateX(0) }
+          100% { transform: translateX(-50%) }
         }
-
-        @keyframes fadeOut {
-          0% { opacity: 1; }
-          100% { opacity: 0; pointer-events: none; }
+        @keyframes breathe {
+          0%, 100% { opacity: 0.4 }
+          50% { opacity: 0.7 }
         }
-
         @keyframes scanline {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(100vh); }
+          0% { top: -2px }
+          100% { top: 100% }
         }
 
-        @keyframes flicker {
-          0%, 95%, 100% { opacity: 1; }
-          96% { opacity: 0.6; }
-          97% { opacity: 1; }
-          98% { opacity: 0.4; }
-          99% { opacity: 0.9; }
-        }
-
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .exit-label {
-          font-family: 'Space Mono', monospace;
-          color: #fff;
+        .platform-row {
+          position: relative;
+          display: grid;
+          grid-template-columns: 3.5rem 1px 1fr auto;
+          align-items: center;
+          gap: 0 1.25rem;
+          padding: 0.9rem 1.4rem 0.9rem 0;
+          border-bottom: 1px solid rgba(255,255,255,0.03);
           cursor: pointer;
-          transition: all 0.2s;
-          animation: glitchFull 6s infinite;
-          text-shadow: 0 0 20px rgba(255,255,255,0.3);
+          transition: background 0.25s;
+          overflow: hidden;
         }
-        .exit-label:hover {
-          text-shadow: 0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(255,255,255,0.4);
-          letter-spacing: 0.4em;
-        }
-
-        .scanline {
-          position: fixed;
-          width: 100%;
-          height: 2px;
-          background: rgba(255,255,255,0.03);
-          animation: scanline 4s linear infinite;
-          pointer-events: none;
-          z-index: 10;
-        }
-
-        .vignette {
-          position: fixed;
+        .platform-row::before {
+          content: '';
+          position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%);
-          pointer-events: none;
-          z-index: 5;
+          background: var(--row-glow);
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        .platform-row:hover::before { opacity: 1; }
+        .platform-row:hover .platform-label { color: var(--row-color); }
+        .platform-row:hover .platform-arrow { opacity: 1; transform: translateX(0); }
+        .platform-row:hover .divider-line { background: var(--row-color); opacity: 0.25; }
+
+        .platform-num {
+          font-family: 'Space Mono', monospace;
+          font-size: 0.58rem;
+          letter-spacing: 0.25em;
+          color: rgba(255,255,255,0.12);
+          text-align: right;
+          transition: color 0.2s;
+        }
+        .platform-row:hover .platform-num { color: var(--row-color); opacity: 0.6; }
+
+        .divider-line {
+          width: 1px;
+          height: 1.8rem;
+          background: rgba(255,255,255,0.06);
+          transition: all 0.3s;
         }
 
-        .noise {
-          position: fixed;
-          inset: 0;
-          opacity: 0.03;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-          pointer-events: none;
-          z-index: 6;
+        .platform-label {
+          font-family: 'Noto Serif JP', serif;
+          font-size: clamp(0.85rem, 1.4vw, 1.05rem);
+          font-weight: 300;
+          color: rgba(232,224,208,0.55);
+          letter-spacing: 0.06em;
+          transition: color 0.25s;
         }
+
+        .platform-meta {
+          font-family: 'Space Mono', monospace;
+          font-size: 0.5rem;
+          color: rgba(255,255,255,0.15);
+          letter-spacing: 0.2em;
+          white-space: nowrap;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+
+        .platform-arrow {
+          font-size: 0.7rem;
+          color: var(--row-color);
+          opacity: 0;
+          transform: translateX(-6px);
+          transition: all 0.3s;
+        }
+
+        ::-webkit-scrollbar { width: 2px; }
+        ::-webkit-scrollbar-track { background: #06050a; }
+        ::-webkit-scrollbar-thumb { background: #1a1225; }
       `}</style>
 
-      {/* 3D Canvas */}
+      {/* ── 3D BACKGROUND ── */}
       <Canvas
-        camera={{ position: [0, 1.6, 8], fov: 70 }}
+        camera={{ position: [0, 0.5, 8], fov: 60 }}
         style={{ position: 'absolute', inset: 0 }}
-        shadows
       >
-        <ambientLight intensity={0.05} />
-        <FogController transitioning={transitioning} />
-        <CameraRig
-          target={transitionTarget}
-          transitioning={transitioning}
-          onTransitionEnd={handleTransitionEnd}
-        />
         <Suspense fallback={null}>
-          <StationGeometry />
-          {SECTIONS.map((section) => (
-            <ExitTunnel
-              key={section.id}
-              section={section}
-              hovered={hoveredSection === section.id}
-              onClick={() => handleExitClick(section)}
-              onHover={() => setHoveredSection(section.id)}
-              onUnhover={() => setHoveredSection(null)}
-            />
-          ))}
+          <FogSetup />
+          <CameraFloat />
+          <StationScene />
         </Suspense>
       </Canvas>
 
-      {/* Overlay effects */}
-      <div className="vignette" />
-      <div className="noise" />
-      <div className="scanline" />
-
-      {/* HUD UI */}
+      {/* Grain overlay */}
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 20,
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '3rem',
+        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, opacity: 0.04,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+      }} />
+
+      {/* Vignette */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 80% 70% at 50% 50%, rgba(6,5,10,0.05) 0%, rgba(6,5,10,0.82) 100%)',
+      }} />
+
+      {/* Scanline */}
+      <div style={{
+        position: 'fixed', left: 0, right: 0, height: '2px', zIndex: 3, pointerEvents: 'none',
+        background: 'linear-gradient(to bottom, transparent, rgba(160,130,255,0.04), transparent)',
+        animation: 'scanline 9s linear infinite',
+      }} />
+
+      {/* ── TOP HEADER ── */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        padding: '1.8rem 2.8rem 1.5rem',
+        background: 'linear-gradient(to bottom, rgba(6,5,10,0.97) 60%, transparent)',
         pointerEvents: 'none',
+        animation: ready ? 'fadeInDown 0.9s ease forwards' : 'none',
       }}>
-        {/* Header */}
-        <div style={{ animation: 'fadeInUp 1.2s ease forwards' }}>
+        <div>
           <p style={{
             fontFamily: '"Space Mono", monospace',
-            fontSize: '0.7rem',
-            color: 'rgba(255,255,255,0.3)',
-            letterSpacing: '0.4em',
-            marginBottom: '0.5rem',
-          }}>// SWIFT CAULFIELD</p>
-          <h1 style={{
+            fontSize: '0.5rem',
+            color: 'rgba(200,184,154,0.2)',
+            letterSpacing: '0.5em',
+            marginBottom: '0.45rem',
+          }}>// TERMINUS STATION</p>
+          <p style={{
             fontFamily: '"Noto Serif JP", serif',
-            fontSize: 'clamp(1.5rem, 4vw, 3rem)',
-            color: '#fff',
+            fontSize: 'clamp(1.1rem, 2vw, 1.5rem)',
+            color: 'rgba(232,224,208,0.85)',
             fontWeight: 300,
-            letterSpacing: '0.05em',
-            animation: 'flicker 8s infinite',
-          }}>地下鉄</h1>
-          <p style={{
-            fontFamily: '"Space Mono", monospace',
-            fontSize: '0.65rem',
-            color: 'rgba(255,255,255,0.2)',
-            letterSpacing: '0.3em',
-            marginTop: '0.25rem',
-          }}>UNDERGROUND STATION — 4 EXITS</p>
+            letterSpacing: '0.08em',
+          }}>Swift Caulfield</p>
         </div>
-
-        {/* Exit labels overlay — positioned to match 3D tunnels */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '1rem',
-          pointerEvents: 'all',
-          maxWidth: '600px',
-          margin: '0 auto',
-          animation: 'fadeInUp 1.5s ease forwards',
-          animationDelay: '0.5s',
-          opacity: 0,
-        }}>
-          {SECTIONS.map((section, i) => (
-            <div
-              key={section.id}
-              onClick={() => handleExitClick(section)}
-              onMouseEnter={() => setHoveredSection(section.id)}
-              onMouseLeave={() => setHoveredSection(null)}
-              style={{
-                border: `1px solid ${hoveredSection === section.id ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.1)'}`,
-                padding: '1rem 1.5rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                background: hoveredSection === section.id ? 'rgba(255,255,255,0.05)' : 'transparent',
-                animationDelay: `${i * 0.1}s`,
-              }}
-            >
-              <p style={{
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.6rem',
-                color: 'rgba(255,255,255,0.4)',
-                letterSpacing: '0.3em',
-                marginBottom: '0.3rem',
-              }}>EXIT 0{section.exit}</p>
-              <p className="exit-label" style={{
-                fontSize: 'clamp(1rem, 2.5vw, 1.5rem)',
-                letterSpacing: '0.3em',
-                animationDelay: `${i * 1.5}s`,
-              }}>{section.label}</p>
-              <p style={{
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.6rem',
-                color: 'rgba(255,255,255,0.25)',
-                letterSpacing: '0.2em',
-                marginTop: '0.2rem',
-              }}>{section.sublabel}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div style={{ textAlign: 'right' }}>
           <p style={{
             fontFamily: '"Space Mono", monospace',
-            fontSize: '0.6rem',
-            color: 'rgba(255,255,255,0.15)',
-            letterSpacing: '0.3em',
-          }}>SELECT AN EXIT TO PROCEED</p>
+            fontSize: '0.45rem',
+            color: 'rgba(255,255,255,0.1)',
+            letterSpacing: '0.35em',
+            marginBottom: '0.3rem',
+          }}>PLATFORM DIRECTORY</p>
           <p style={{
             fontFamily: '"Space Mono", monospace',
-            fontSize: '0.6rem',
-            color: 'rgba(255,255,255,0.15)',
-            letterSpacing: '0.3em',
-          }}>2026</p>
+            fontSize: '0.45rem',
+            color: 'rgba(255,255,255,0.06)',
+            letterSpacing: '0.25em',
+          }}>01 — 07 DEPARTURES</p>
         </div>
       </div>
 
-      {/* Glitch transition overlay */}
-      <GlitchOverlay active={showGlitch} label={transitionLabel} />
+      {/* ── MAIN CONTENT ── */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 10,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '5.5rem 2.8rem 4rem',
+      }}>
+        <div style={{
+          width: '100%', maxWidth: '780px',
+          animation: ready ? 'fadeInUp 1s ease 0.25s both' : 'none',
+        }}>
+
+          {/* Board header */}
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            paddingBottom: '0.7rem',
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            marginBottom: '0.15rem',
+          }}>
+            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.48rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.35em' }}>
+              PLATFORM
+            </p>
+            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.48rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.35em' }}>
+              DESTINATION
+            </p>
+            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.48rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.35em' }}>
+              STATUS
+            </p>
+          </div>
+
+          {/* Platform rows */}
+          {PLATFORMS.map((p, i) => (
+            <div
+              key={p.id}
+              className="platform-row"
+              style={{
+                '--row-color': p.color,
+                '--row-glow': `linear-gradient(to right, ${p.glow} 0%, transparent 80%)`,
+                animationDelay: `${0.35 + i * 0.07}s`,
+                animation: ready ? `fadeInUp 0.6s ease ${0.35 + i * 0.07}s both` : 'none',
+              }}
+              onClick={() => handleEnter(p.id)}
+              onMouseEnter={() => setHovered(p.id)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {/* Platform number */}
+              <p className="platform-num">{p.num}</p>
+
+              {/* Divider */}
+              <div className="divider-line" />
+
+              {/* Main label + description */}
+              <div>
+                <p className="platform-label">{p.label}</p>
+                {hovered === p.id && (
+                  <p style={{
+                    fontFamily: '"Space Mono", monospace',
+                    fontSize: '0.48rem',
+                    color: p.color,
+                    opacity: 0.45,
+                    letterSpacing: '0.18em',
+                    marginTop: '0.25rem',
+                    animation: 'fadeIn 0.2s ease',
+                  }}>{p.desc}</p>
+                )}
+              </div>
+
+              {/* Meta + status */}
+              <div className="platform-meta">
+                <span style={{ color: p.color, opacity: 0.3, fontFamily: '"Noto Serif JP", serif', fontSize: '0.7rem' }}>
+                  {p.kanji}
+                </span>
+                <span style={{
+                  color: p.color, opacity: 0.55,
+                  fontSize: '0.45rem', letterSpacing: '0.2em',
+                }}>
+                  OPEN
+                </span>
+                <span className="platform-arrow">→</span>
+              </div>
+            </div>
+          ))}
+
+          {/* Footer rule */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', marginTop: '0.15rem', paddingTop: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ fontFamily: '"Noto Serif JP", serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.04)', letterSpacing: '0.3em' }}>終着駅</p>
+            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.06)', letterSpacing: '0.25em', animation: 'breathe 4s ease infinite' }}>
+              // SELECT A PLATFORM TO DEPART
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── BOTTOM TICKER ── */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
+        borderTop: '1px solid rgba(255,255,255,0.03)',
+        background: 'rgba(6,5,10,0.9)',
+        overflow: 'hidden',
+        height: '1.8rem',
+        display: 'flex', alignItems: 'center',
+      }}>
+        <div style={{
+          display: 'flex', gap: '4rem',
+          animation: 'tickerScroll 35s linear infinite',
+          whiteSpace: 'nowrap',
+        }}>
+          {[...Array(2)].map((_, rep) =>
+            PLATFORMS.map((p) => (
+              <span key={`${rep}-${p.id}`} style={{
+                fontFamily: '"Space Mono", monospace',
+                fontSize: '0.42rem',
+                color: 'rgba(255,255,255,0.07)',
+                letterSpacing: '0.3em',
+              }}>
+                PLT.{p.num} {p.label} ○
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* ── TUNNEL TRANSITION ── */}
+      <TunnelTransition
+        active={!!tunneling}
+        onComplete={() => { onEnter(tunneling); setTunneling(null) }}
+      />
     </div>
   )
 }
