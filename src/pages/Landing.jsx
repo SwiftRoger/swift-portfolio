@@ -249,13 +249,56 @@ export default function Landing({ onEnter }) {
   const [hovered, setHovered] = useState(null)
   const [tunneling, setTunneling] = useState(null)
   const [ready, setReady] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const t = setTimeout(() => setReady(true), 200)
-    return () => clearTimeout(t)
-  }, [])
+  const loadingTimer = setTimeout(() => {
+    setLoading(false)
+
+    setTimeout(() => {
+      setReady(true)
+    }, 50)
+
+  }, 1800)
+
+  return () => clearTimeout(loadingTimer)
+}, [])
 
   return (
+  <>
+    {loading && (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: '#06050a',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: '1rem',
+          color: 'rgba(232,224,208,0.8)',
+          letterSpacing: '0.3em',
+          fontFamily: '"Space Mono", monospace',
+          fontSize: '0.7rem',
+        }}
+      >
+        <div
+          style={{
+            width: '70px',
+            height: '70px',
+            borderRadius: '50%',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderTop: '1px solid rgba(255,255,255,0.6)',
+            animation: 'spinLoader 1.2s linear infinite',
+          }}
+        />
+
+        <p>INITIALIZING TERMINUS STATION</p>
+      </div>
+    )}
+
     <div style={{
       width: '100vw', height: '100vh',
       background: '#06050a',
@@ -275,6 +318,10 @@ export default function Landing({ onEnter }) {
         @keyframes tunnelIn { 0% { opacity:0; transform:scale(0.1) } 60% { opacity:1 } 100% { opacity:1; transform:scale(3) } }
         @keyframes rimPulse { 0%,100% { box-shadow: 0 0 20px rgba(255,255,255,0.04), inset 0 0 30px rgba(0,0,0,0.8) } 50% { box-shadow: 0 0 35px rgba(255,255,255,0.08), inset 0 0 30px rgba(0,0,0,0.8) } }
         @keyframes diamondPulse { 0%,100% { opacity:0.4; transform:rotate(45deg) scale(1) } 50% { opacity:0.9; transform:rotate(45deg) scale(1.4) } }
+        @keyframes spinLoader {
+        from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+          }
 
         .portal {
           border-radius: 50%;
@@ -405,6 +452,8 @@ export default function Landing({ onEnter }) {
         alignItems: 'center', justifyContent: 'center',
         padding: '5rem 2rem 2rem',
         gap: '2.5rem',
+        opacity: ready ? 1 : 0,
+        transition: 'opacity 0.4s ease',
       }}>
 
         {/* 3 Portals */}
@@ -461,6 +510,7 @@ export default function Landing({ onEnter }) {
         active={!!tunneling}
         onComplete={() => { onEnter(tunneling); setTunneling(null) }}
       />
-    </div>
+        </div>
+  </>
   )
 }
