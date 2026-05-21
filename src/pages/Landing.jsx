@@ -197,78 +197,49 @@ function TunnelTransition({ active, onComplete }) {
   )
 }
 
-// ── PLATFORM DATA ─────────────────────────────────────────────────────────────
+// ── DATA ─────────────────────────────────────────────────────────────────────
 
-const PLATFORMS = [
+const PORTALS = [
   {
-    id: 'bio',
-    num: '01',
-    label: 'BIOGRAPHY',
-    kanji: '伝記',
-    desc: 'Origin. Memory. Self.',
-    color: '#c8b89a',
-    glow: 'rgba(200,184,154,0.08)',
-    border: 'rgba(200,184,154,0.18)',
-  },
-  {
-    id: 'art',
-    num: '02',
-    label: 'ART',
-    kanji: '芸術',
-    desc: 'Illustration & original works.',
-    color: '#d4a0b0',
-    glow: 'rgba(212,160,176,0.08)',
-    border: 'rgba(212,160,176,0.18)',
-  },
-  {
-    id: 'videos',
-    num: '03',
-    label: 'VIDEO',
-    kanji: '映像',
-    desc: 'Motion & recorded works.',
-    color: '#a0c0d4',
-    glow: 'rgba(160,192,212,0.08)',
-    border: 'rgba(160,192,212,0.18)',
-  },
-  {
-    id: 'design',
-    num: '04',
-    label: 'DESIGN',
-    kanji: '設計',
-    desc: 'Graphic & visual design.',
-    color: '#b0d4a8',
-    glow: 'rgba(176,212,168,0.08)',
-    border: 'rgba(176,212,168,0.18)',
+    id: 'index',
+    title: 'Character',
+    sub: 'Explore the people',
+    gradient: 'radial-gradient(ellipse at 40% 35%, #1a1428 0%, #0a0810 60%, #06050a 100%)',
   },
   {
     id: 'story',
-    num: '05',
-    label: 'STORY',
-    kanji: '物語',
-    desc: 'Chronicles of the Land of Three.',
-    color: '#c8b89a',
-    glow: 'rgba(200,184,154,0.08)',
-    border: 'rgba(200,184,154,0.18)',
-  },
-  {
-    id: 'index',
-    num: '06',
-    label: 'INDEX',
-    kanji: '神社',
-    desc: 'Character shrine & compendium.',
-    color: '#c0b0ff',
-    glow: 'rgba(192,176,255,0.08)',
-    border: 'rgba(192,176,255,0.18)',
+    title: 'Story',
+    sub: 'Explore the narrative',
+    gradient: 'radial-gradient(ellipse at 40% 35%, #1a1020 0%, #0d0a0f 60%, #06050a 100%)',
   },
   {
     id: 'world',
-    num: '07',
-    label: 'WORLD',
-    kanji: '世界',
-    desc: 'Living map of the three realms.',
-    color: '#4080ff',
-    glow: 'rgba(64,128,255,0.08)',
-    border: 'rgba(64,128,255,0.18)',
+    title: 'World',
+    sub: 'Explore the universe',
+    gradient: 'radial-gradient(ellipse at 40% 35%, #0e1420 0%, #080c14 60%, #06050a 100%)',
+  },
+]
+
+const ICONS = [
+  {
+    id: 'bio',
+    label: 'Biography',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  },
+  {
+    id: 'art',
+    label: 'Art',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>,
+  },
+  {
+    id: 'videos',
+    label: 'Video',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+  },
+  {
+    id: 'design',
+    label: 'Design',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
   },
 ]
 
@@ -284,10 +255,6 @@ export default function Landing({ onEnter }) {
     return () => clearTimeout(t)
   }, [])
 
-  const handleEnter = (id) => {
-    setTunneling(id)
-  }
-
   return (
     <div style={{
       width: '100vw', height: '100vh',
@@ -297,110 +264,104 @@ export default function Landing({ onEnter }) {
       fontFamily: '"Space Mono", monospace',
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Serif+JP:wght@300;400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Serif+JP:wght@300;400;600&family=Cormorant+Garamond:wght@300;400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-12px) } to { opacity: 1; transform: translateY(0) } }
-        @keyframes tunnelIn {
-          0% { opacity: 0; transform: scale(0.1) }
-          60% { opacity: 1 }
-          100% { opacity: 1; transform: scale(3) }
-        }
-        @keyframes tickerScroll {
-          0% { transform: translateX(0) }
-          100% { transform: translateX(-50%) }
-        }
-        @keyframes breathe {
-          0%, 100% { opacity: 0.4 }
-          50% { opacity: 0.7 }
-        }
-        @keyframes scanline {
-          0% { top: -2px }
-          100% { top: 100% }
-        }
+        @keyframes portalRise { from { opacity: 0; transform: translateY(50px) scale(0.93) } to { opacity: 1; transform: translateY(0) scale(1) } }
+        @keyframes iconRise { from { opacity: 0; transform: translateY(30px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes breathe { 0%,100% { opacity: 0.3 } 50% { opacity: 0.7 } }
+        @keyframes scanline { 0% { top: -2px } 100% { top: 100% } }
+        @keyframes tunnelIn { 0% { opacity:0; transform:scale(0.1) } 60% { opacity:1 } 100% { opacity:1; transform:scale(3) } }
+        @keyframes rimPulse { 0%,100% { box-shadow: 0 0 20px rgba(255,255,255,0.04), inset 0 0 30px rgba(0,0,0,0.8) } 50% { box-shadow: 0 0 35px rgba(255,255,255,0.08), inset 0 0 30px rgba(0,0,0,0.8) } }
+        @keyframes diamondPulse { 0%,100% { opacity:0.4; transform:rotate(45deg) scale(1) } 50% { opacity:0.9; transform:rotate(45deg) scale(1.4) } }
 
-        .platform-row {
-          position: relative;
-          display: grid;
-          grid-template-columns: 3.5rem 1px 1fr auto;
-          align-items: center;
-          gap: 0 1.25rem;
-          padding: 0.9rem 1.4rem 0.9rem 0;
-          border-bottom: 1px solid rgba(255,255,255,0.03);
+        .portal {
+          border-radius: 50%;
           cursor: pointer;
-          transition: background 0.25s;
+          position: relative;
           overflow: hidden;
+          flex-shrink: 0;
+          animation: rimPulse 4s ease infinite;
+          transition: transform 0.5s cubic-bezier(0.23,1,0.32,1), opacity 0.4s ease, box-shadow 0.4s ease;
         }
-        .platform-row::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: var(--row-glow);
-          opacity: 0;
-          transition: opacity 0.3s;
+        .portal:hover {
+          transform: scale(1.04) !important;
+          box-shadow: 0 0 60px rgba(255,255,255,0.1), 0 0 120px rgba(200,180,255,0.05), inset 0 0 40px rgba(0,0,0,0.5) !important;
         }
-        .platform-row:hover::before { opacity: 1; }
-        .platform-row:hover .platform-label { color: var(--row-color); }
-        .platform-row:hover .platform-arrow { opacity: 1; transform: translateX(0); }
-        .platform-row:hover .divider-line { background: var(--row-color); opacity: 0.25; }
-
-        .platform-num {
-          font-family: 'Space Mono', monospace;
-          font-size: 0.58rem;
-          letter-spacing: 0.25em;
-          color: rgba(255,255,255,0.12);
-          text-align: right;
-          transition: color 0.2s;
+        .portal-inner {
+          position: absolute; inset: 0;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          gap: 0.5rem;
+          z-index: 2;
         }
-        .platform-row:hover .platform-num { color: var(--row-color); opacity: 0.6; }
-
-        .divider-line {
-          width: 1px;
-          height: 1.8rem;
-          background: rgba(255,255,255,0.06);
-          transition: all 0.3s;
-        }
-
-        .platform-label {
-          font-family: 'Noto Serif JP', serif;
-          font-size: clamp(0.85rem, 1.4vw, 1.05rem);
+        .portal-title {
+          font-family: 'Cormorant Garamond', serif;
           font-weight: 300;
-          color: rgba(232,224,208,0.55);
-          letter-spacing: 0.06em;
-          transition: color 0.25s;
-        }
-
-        .platform-meta {
-          font-family: 'Space Mono', monospace;
-          font-size: 0.5rem;
-          color: rgba(255,255,255,0.15);
           letter-spacing: 0.2em;
-          white-space: nowrap;
-          display: flex;
-          align-items: center;
-          gap: 1rem;
+          color: rgba(232,224,208,0.85);
+          text-transform: uppercase;
+          transition: color 0.3s, letter-spacing 0.4s;
         }
-
-        .platform-arrow {
-          font-size: 0.7rem;
-          color: var(--row-color);
-          opacity: 0;
-          transform: translateX(-6px);
-          transition: all 0.3s;
+        .portal:hover .portal-title { color: #fff; letter-spacing: 0.28em; }
+        .portal-diamond {
+          width: 5px; height: 5px;
+          background: rgba(232,224,208,0.45);
+          transform: rotate(45deg);
+          animation: diamondPulse 2.5s ease infinite;
+          transition: background 0.3s;
         }
+        .portal:hover .portal-diamond { background: rgba(255,255,255,0.9); }
+        .portal-sub {
+          font-family: 'Space Mono', monospace;
+          font-size: 0.48rem;
+          letter-spacing: 0.28em;
+          color: rgba(200,184,154,0.35);
+          text-transform: uppercase;
+          transition: color 0.3s;
+        }
+        .portal:hover .portal-sub { color: rgba(200,184,154,0.75); }
 
-        ::-webkit-scrollbar { width: 2px; }
-        ::-webkit-scrollbar-track { background: #06050a; }
-        ::-webkit-scrollbar-thumb { background: #1a1225; }
+        .icon-btn {
+          display: flex; flex-direction: column;
+          align-items: center; gap: 0.65rem;
+          cursor: pointer;
+          transition: transform 0.4s cubic-bezier(0.23,1,0.32,1);
+        }
+        .icon-btn:hover { transform: translateY(-5px); }
+        .icon-ring {
+          width: 68px; height: 68px;
+          border-radius: 50%;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(6,5,10,0.6);
+          display: flex; align-items: center; justify-content: center;
+          transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+        }
+        .icon-btn:hover .icon-ring {
+          border-color: rgba(255,255,255,0.3);
+          background: rgba(20,16,30,0.9);
+          box-shadow: 0 0 20px rgba(200,180,255,0.08);
+        }
+        .icon-ring svg {
+          width: 22px; height: 22px;
+          color: rgba(200,184,154,0.5);
+          transition: color 0.3s;
+        }
+        .icon-btn:hover .icon-ring svg { color: rgba(232,224,208,0.95); }
+        .icon-label {
+          font-family: 'Space Mono', monospace;
+          font-size: 0.46rem;
+          letter-spacing: 0.28em;
+          color: rgba(200,184,154,0.3);
+          text-transform: uppercase;
+          transition: color 0.3s;
+        }
+        .icon-btn:hover .icon-label { color: rgba(200,184,154,0.75); }
       `}</style>
 
-      {/* ── 3D BACKGROUND ── */}
-      <Canvas
-        camera={{ position: [0, 0.5, 8], fov: 60 }}
-        style={{ position: 'absolute', inset: 0 }}
-      >
+      {/* 3D Background */}
+      <Canvas camera={{ position: [0, 0.5, 8], fov: 60 }} style={{ position: 'absolute', inset: 0 }}>
         <Suspense fallback={null}>
           <FogSetup />
           <CameraFloat />
@@ -408,189 +369,94 @@ export default function Landing({ onEnter }) {
         </Suspense>
       </Canvas>
 
-      {/* Grain overlay */}
-      <div style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, opacity: 0.04,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-      }} />
+      {/* Grain */}
+      <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 1, opacity: 0.04, backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
       {/* Vignette */}
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none',
-        background: 'radial-gradient(ellipse 80% 70% at 50% 50%, rgba(6,5,10,0.05) 0%, rgba(6,5,10,0.82) 100%)',
-      }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 2, pointerEvents: 'none', background: 'radial-gradient(ellipse 80% 70% at 50% 50%, rgba(6,5,10,0.05) 0%, rgba(6,5,10,0.85) 100%)' }} />
 
       {/* Scanline */}
-      <div style={{
-        position: 'fixed', left: 0, right: 0, height: '2px', zIndex: 3, pointerEvents: 'none',
-        background: 'linear-gradient(to bottom, transparent, rgba(160,130,255,0.04), transparent)',
-        animation: 'scanline 9s linear infinite',
-      }} />
+      <div style={{ position: 'fixed', left: 0, right: 0, height: '2px', zIndex: 3, pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent, rgba(160,130,255,0.04), transparent)', animation: 'scanline 9s linear infinite' }} />
 
-      {/* ── TOP HEADER ── */}
+      {/* Header */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-        padding: '1.8rem 2.8rem 1.5rem',
+        padding: '1.8rem 2.5rem 1.5rem',
         background: 'linear-gradient(to bottom, rgba(6,5,10,0.97) 60%, transparent)',
         pointerEvents: 'none',
         animation: ready ? 'fadeInDown 0.9s ease forwards' : 'none',
       }}>
         <div>
-          <p style={{
-            fontFamily: '"Space Mono", monospace',
-            fontSize: '0.5rem',
-            color: 'rgba(200,184,154,0.2)',
-            letterSpacing: '0.5em',
-            marginBottom: '0.45rem',
-          }}>// TERMINUS STATION</p>
-          <p style={{
-            fontFamily: '"Noto Serif JP", serif',
-            fontSize: 'clamp(1.1rem, 2vw, 1.5rem)',
-            color: 'rgba(232,224,208,0.85)',
-            fontWeight: 300,
-            letterSpacing: '0.08em',
-          }}>Swift Caulfield</p>
+          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.48rem', color: 'rgba(200,184,154,0.25)', letterSpacing: '0.5em', marginBottom: '0.4rem' }}>// TERMINUS STATION</p>
+          <p style={{ fontFamily: '"Cormorant Garamond",serif', fontSize: 'clamp(1.2rem,2vw,1.6rem)', color: 'rgba(232,224,208,0.9)', fontWeight: 300, letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Swift Caulfield</p>
+          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.42rem', color: 'rgba(200,184,154,0.15)', letterSpacing: '0.35em' }}>EXPLORE. DISCOVER. REMEMBER.</p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <p style={{
-            fontFamily: '"Space Mono", monospace',
-            fontSize: '0.45rem',
-            color: 'rgba(255,255,255,0.1)',
-            letterSpacing: '0.35em',
-            marginBottom: '0.3rem',
-          }}>PLATFORM DIRECTORY</p>
-          <p style={{
-            fontFamily: '"Space Mono", monospace',
-            fontSize: '0.45rem',
-            color: 'rgba(255,255,255,0.06)',
-            letterSpacing: '0.25em',
-          }}>01 — 07 DEPARTURES</p>
+          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.08)', letterSpacing: '0.35em', marginBottom: '0.25rem' }}>PLATFORM DIRECTORY</p>
+          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.05)', letterSpacing: '0.25em' }}>01 — 07 DEPARTURES</p>
         </div>
       </div>
 
-      {/* ── MAIN CONTENT ── */}
+      {/* Main */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 10,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '5.5rem 2.8rem 4rem',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '5rem 2rem 2rem',
+        gap: '2.5rem',
       }}>
-        <div style={{
-          width: '100%', maxWidth: '780px',
-          animation: ready ? 'fadeInUp 1s ease 0.25s both' : 'none',
-        }}>
 
-          {/* Board header */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            paddingBottom: '0.7rem',
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
-            marginBottom: '0.15rem',
-          }}>
-            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.48rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.35em' }}>
-              PLATFORM
-            </p>
-            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.48rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.35em' }}>
-              DESTINATION
-            </p>
-            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.48rem', color: 'rgba(255,255,255,0.1)', letterSpacing: '0.35em' }}>
-              STATUS
-            </p>
-          </div>
-
-          {/* Platform rows */}
-          {PLATFORMS.map((p, i) => (
-            <div
-              key={p.id}
-              className="platform-row"
-              style={{
-                '--row-color': p.color,
-                '--row-glow': `linear-gradient(to right, ${p.glow} 0%, transparent 80%)`,
-                animationDelay: `${0.35 + i * 0.07}s`,
-                animation: ready ? `fadeInUp 0.6s ease ${0.35 + i * 0.07}s both` : 'none',
-              }}
-              onClick={() => handleEnter(p.id)}
-              onMouseEnter={() => setHovered(p.id)}
-              onMouseLeave={() => setHovered(null)}
-            >
-              {/* Platform number */}
-              <p className="platform-num">{p.num}</p>
-
-              {/* Divider */}
-              <div className="divider-line" />
-
-              {/* Main label + description */}
-              <div>
-                <p className="platform-label">{p.label}</p>
-                {hovered === p.id && (
-                  <p style={{
-                    fontFamily: '"Space Mono", monospace',
-                    fontSize: '0.48rem',
-                    color: p.color,
-                    opacity: 0.45,
-                    letterSpacing: '0.18em',
-                    marginTop: '0.25rem',
-                    animation: 'fadeIn 0.2s ease',
-                  }}>{p.desc}</p>
-                )}
+        {/* 3 Portals */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.8rem' }}>
+          {PORTALS.map((p, i) => {
+            const isCenter = p.id === 'story'
+            const size = isCenter ? 320 : 220
+            const faded = hovered && hovered !== p.id
+            return (
+              <div
+                key={p.id}
+                className="portal"
+                onClick={() => setTunneling(p.id)}
+                onMouseEnter={() => setHovered(p.id)}
+                onMouseLeave={() => setHovered(null)}
+                style={{
+                  width: size, height: size,
+                  background: p.gradient,
+                  border: `1px solid rgba(255,255,255,${isCenter ? 0.15 : 0.08})`,
+                  boxShadow: `0 0 ${isCenter ? 50 : 25}px rgba(0,0,0,0.9), inset 0 0 ${isCenter ? 40 : 20}px rgba(0,0,0,0.7)`,
+                  opacity: faded ? 0.45 : 1,
+                  transform: faded ? 'scale(0.96)' : 'scale(1)',
+                  animation: ready ? `portalRise 0.9s cubic-bezier(0.23,1,0.32,1) ${0.3 + i * 0.1}s both` : 'none',
+                }}
+              >
+                {/* Rim highlight */}
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.04), transparent 60%)', zIndex: 1, pointerEvents: 'none' }} />
+                {/* Bottom shadow */}
+                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.5), transparent 60%)', zIndex: 1, pointerEvents: 'none' }} />
+                <div className="portal-inner">
+                  <p className="portal-title" style={{ fontSize: isCenter ? 'clamp(1.5rem,2.5vw,2rem)' : 'clamp(1rem,1.8vw,1.3rem)' }}>{p.title}</p>
+                  <div className="portal-diamond" />
+                  <p className="portal-sub">{p.sub}</p>
+                </div>
               </div>
+            )
+          })}
+        </div>
 
-              {/* Meta + status */}
-              <div className="platform-meta">
-                <span style={{ color: p.color, opacity: 0.3, fontFamily: '"Noto Serif JP", serif', fontSize: '0.7rem' }}>
-                  {p.kanji}
-                </span>
-                <span style={{
-                  color: p.color, opacity: 0.55,
-                  fontSize: '0.45rem', letterSpacing: '0.2em',
-                }}>
-                  OPEN
-                </span>
-                <span className="platform-arrow">→</span>
-              </div>
+        {/* 4 Icon buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', animation: ready ? 'iconRise 0.7s ease 0.65s both' : 'none' }}>
+          {ICONS.map((item) => (
+            <div key={item.id} className="icon-btn" onClick={() => setTunneling(item.id)}>
+              <div className="icon-ring">{item.svg}</div>
+              <p className="icon-label">{item.label}</p>
             </div>
           ))}
-
-          {/* Footer rule */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', marginTop: '0.15rem', paddingTop: '1.2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p style={{ fontFamily: '"Noto Serif JP", serif', fontSize: '0.6rem', color: 'rgba(255,255,255,0.04)', letterSpacing: '0.3em' }}>終着駅</p>
-            <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.06)', letterSpacing: '0.25em', animation: 'breathe 4s ease infinite' }}>
-              // SELECT A PLATFORM TO DEPART
-            </p>
-          </div>
         </div>
+
       </div>
 
-      {/* ── BOTTOM TICKER ── */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
-        borderTop: '1px solid rgba(255,255,255,0.03)',
-        background: 'rgba(6,5,10,0.9)',
-        overflow: 'hidden',
-        height: '1.8rem',
-        display: 'flex', alignItems: 'center',
-      }}>
-        <div style={{
-          display: 'flex', gap: '4rem',
-          animation: 'tickerScroll 35s linear infinite',
-          whiteSpace: 'nowrap',
-        }}>
-          {[...Array(2)].map((_, rep) =>
-            PLATFORMS.map((p) => (
-              <span key={`${rep}-${p.id}`} style={{
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.42rem',
-                color: 'rgba(255,255,255,0.07)',
-                letterSpacing: '0.3em',
-              }}>
-                PLT.{p.num} {p.label} ○
-              </span>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* ── TUNNEL TRANSITION ── */}
+      {/* Tunnel */}
       <TunnelTransition
         active={!!tunneling}
         onComplete={() => { onEnter(tunneling); setTunneling(null) }}

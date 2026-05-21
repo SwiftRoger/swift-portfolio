@@ -151,8 +151,8 @@ export default function World({ onBack }) {
       api.get('/api/world/events'),
       api.get('/api/world/locations'),
     ]).then(([evRes, locRes]) => {
-      setEvents(evRes.data || [])
-      setLocations(locRes.data || [])
+      setEvents(Array.isArray(evRes.data) ? evRes.data : [])
+      setLocations(Array.isArray(locRes.data) ? locRes.data : [])
       if (evRes.data?.length > 0) {
         setLastUpdated(new Date(evRes.data[0].created_at))
       }

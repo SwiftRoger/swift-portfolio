@@ -131,7 +131,7 @@ export default function Video({ onBack }) {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    api.get('/api/videos').then(r => { setItems(r.data || []); setLoaded(true) }).catch(() => setLoaded(true))
+    api.get('/api/characters').then(r => { setCharacters(Array.isArray(r.data) ? r.data : []); setLoaded(true) }).catch(() => setLoaded(true))
   }, [])
 
   const getEmbedUrl = (url) => {

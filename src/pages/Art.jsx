@@ -111,7 +111,7 @@ export default function Art({ onBack }) {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    api.get('/api/art').then(r => { setItems(r.data || []); setLoaded(true) }).catch(() => setLoaded(true))
+    api.get('/api/characters').then(r => { setCharacters(Array.isArray(r.data) ? r.data : []); setLoaded(true) }).catch(() => setLoaded(true))
   }, [])
 
   return (

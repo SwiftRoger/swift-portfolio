@@ -223,7 +223,7 @@ export default function Index({ onBack }) {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    api.get('/api/characters').then(r => { setCharacters(r.data || []); setLoaded(true) }).catch(() => setLoaded(true))
+    api.get('/api/characters').then(r => { setCharacters(Array.isArray(r.data) ? r.data : []); setLoaded(true) }).catch(() => setLoaded(true))
   }, [])
 
   const filtered = filter === 'all' ? characters : characters.filter(c => c.type === filter)
