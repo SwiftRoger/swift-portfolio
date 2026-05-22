@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import api from '../utils/api'
+import { getWorldClock } from '../utils/worldClock'
 
 function MapRoom() {
   const tableGlowRef = useRef()
@@ -145,6 +146,21 @@ export default function World({ onBack }) {
   const [loaded, setLoaded] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(null)
   const [hoveredPin, setHoveredPin] = useState(null)
+  const [clock, setClock] = useState(() => getWorldClock())
+  const [weather, setWeather] = useState(null)
+
+  useEffect(() => {
+    const tick = setInterval(() => setClock(getWorldClock()), 1000)
+    return () => clearInterval(tick)
+  }, [])
+
+  useEffect(() => {
+    api.get('/api/world/status')
+      .then(res => {
+        if (res.data?.weather_mood) setWeather(res.data.weather_mood)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -197,8 +213,14 @@ export default function World({ onBack }) {
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(64,128,255,0.2)', letterSpacing: '0.4em' }}>// PLATFORM 07 — WORLD</p>
-          {lastUpdated && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', color: 'rgba(64,128,255,0.15)', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
-            LAST UPDATED {lastUpdated.toLocaleTimeString()}
+          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', color: 'rgba(64,128,255,0.35)', letterSpacing: '0.15em', marginTop: '0.35rem' }}>
+            {clock.worldDate} · {clock.worldTime}
+          </p>
+          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', color: 'rgba(64,128,255,0.2)', letterSpacing: '0.15em', marginTop: '0.15rem' }}>
+            {clock.season.toUpperCase()}{weather ? ` · ${weather.toUpperCase()}` : ''}
+          </p>
+          {lastUpdated && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.45rem', color: 'rgba(64,128,255,0.12)', letterSpacing: '0.2em', marginTop: '0.2rem' }}>
+            FEED UPDATED {lastUpdated.toLocaleTimeString()}
           </p>}
         </div>
       </div>
@@ -318,6 +340,10 @@ export default function World({ onBack }) {
         }}>
           <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid rgba(64,128,255,0.08)' }}>
             <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(64,128,255,0.3)', letterSpacing: '0.3em' }}>// LIVE DISPATCH</p>
+            <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', color: 'rgba(64,128,255,0.25)', letterSpacing: '0.12em', marginTop: '0.5rem', lineHeight: 1.6 }}>
+              {clock.worldDate}<br />{clock.worldTime}<br />
+              {clock.season}{weather ? ` · ${weather}` : ''}
+            </p>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>

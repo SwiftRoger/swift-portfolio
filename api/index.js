@@ -263,8 +263,50 @@ app.delete('/api/world/locations/:id', auth, async (req, res) => {
 // ── WORLD EVENTS (AI) ─────────────────────────────
 app.get('/api/world/events', async (req, res) => {
   try {
-    const rows = await sql`SELECT * FROM portfolio_world_events ORDER BY created_at DESC LIMIT 20`
+    const rows = await sql`
+      SELECT * FROM portfolio_world_events
+      WHERE source_type != 'system'
+      ORDER BY created_at DESC LIMIT 40`
     res.json(rows)
+  } catch { res.status(500).json({ message: 'Server error' }) }
+})
+
+app.get('/api/world/status', async (req, res) => {
+  try {
+    const now = new Date()
+    const utcMonth = now.getUTCMonth()
+    const season =
+      utcMonth >= 2 && utcMonth <= 4 ? 'spring'
+        : utcMonth >= 5 && utcMonth <= 7 ? 'summer'
+          : utcMonth >= 8 && utcMonth <= 10 ? 'autumn'
+            : 'winter'
+    const worldDate = now.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }) + ', 2070'
+    const worldTime = now.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      timeZone: 'UTC',
+    }) + ' UTC'
+
+    const statusRows = await sql`
+      SELECT summary FROM portfolio_world_events
+      WHERE source_type = 'system' AND headline = '__BROADCAST_STATUS__'
+      ORDER BY created_at DESC LIMIT 1`
+
+    let weather_mood = null
+    if (statusRows[0]?.summary) {
+      try {
+        const parsed = JSON.parse(statusRows[0].summary)
+        weather_mood = parsed.weather_mood || null
+      } catch { /* ignore */ }
+    }
+
+    res.json({ worldDate, worldTime, season, weather_mood })
   } catch { res.status(500).json({ message: 'Server error' }) }
 })
 
@@ -303,7 +345,32 @@ app.delete('/api/world/events/:id', auth, async (req, res) => {
 
 
 
-// ── DAILY AI BROADCAST (3 ephemeral news lines) ───
+// ── DAILY AI BROADCAST (per-realm ephemeral news) ───
+const REALM_Y = {
+  north: [10, 35],
+  middle: [36, 65],
+  south: [66, 90],
+}
+
+const randomRealmCounts = () => ({
+  north: 2 + Math.floor(Math.random() * 4),
+  middle: 2 + Math.floor(Math.random() * 4),
+  south: 2 + Math.floor(Math.random() * 4),
+})
+
+const clamp = (n, min, max) => Math.min(max, Math.max(min, Number(n) || min))
+
+const normalizeRealmEvent = (ev, realm) => {
+  const [yMin, yMax] = REALM_Y[realm]
+  return {
+    headline: ev.headline,
+    summary: ev.summary,
+    location_name: ev.location_name,
+    x_percent: clamp(ev.x_percent, 10, 90),
+    y_percent: clamp(ev.y_percent, yMin, yMax),
+  }
+}
+
 const cronAuth = (req, res, next) => {
   const secret = process.env.CRON_SECRET
   if (!secret) return res.status(501).json({ message: 'CRON_SECRET not set on server' })
@@ -345,6 +412,9 @@ async function runDailyBroadcast() {
     ? manualRows.map((e, i) => `${i + 1}. ${e.headline}${e.summary ? ` — ${e.summary}` : ''}`).join('\n')
     : 'No manual canon yet. Keep broadcasts atmospheric only — weather, travel, trade, mood. No major wars or plagues unless implied by season.'
 
+  const realmCounts = randomRealmCounts()
+  const totalTarget = realmCounts.north + realmCounts.middle + realmCounts.south
+
   const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -353,16 +423,22 @@ async function runDailyBroadcast() {
     },
     body: JSON.stringify({
       model: 'llama-3.1-8b-instant',
-      max_tokens: 900,
+      max_tokens: 2400,
       messages: [{
         role: 'system',
         content: `You are a news broadcaster for "The Land of Three" (dark fantasy).
 Write today's bulletin — NOT new canon. React to admin canon facts when provided.
-Pick ONE weather mood for the whole day (sunny, cloudy, windy, rainy, or snowy) that fits the season. All 3 lines share it.
-Return ONLY a JSON array of exactly 3 objects:
-{ "headline", "summary", "location_name", "x_percent", "y_percent" }
-headline = short ticker. summary = 1–2 sentences, news-desk tone.
-Map coords: Ashen North y 10–35, Verdant Middle y 36–65, Sunken South y 66–90, x 10–90.
+Pick ONE weather mood for the whole day (sunny, cloudy, windy, rainy, or snowy) that fits the season.
+Return ONLY JSON:
+{
+  "weather_mood": "sunny|cloudy|windy|rainy|snowy",
+  "north": [ { "headline", "summary", "location_name", "x_percent", "y_percent" }, ... ],
+  "middle": [ ... ],
+  "south": [ ... ]
+}
+Each array item = one bulletin for that realm only.
+Ashen North: y 10–35. Verdant Middle: y 36–65. Sunken South: y 66–90. x 10–90.
+headline = short ticker. summary = 1–2 sentences. Vary tone across lines in a realm.
 Do not contradict manual canon. Do not invent huge new plot. Flow naturally.`,
       }, {
         role: 'user',
@@ -373,19 +449,40 @@ Season: ${season}
 Manual canon (source of truth):
 ${canonBlock}
 
-Write exactly 3 breaking broadcast lines for right now.`,
+Write EXACTLY this many bulletins per realm:
+- Ashen North (north): ${realmCounts.north} lines
+- Verdant Middle (middle): ${realmCounts.middle} lines
+- Sunken South (south): ${realmCounts.south} lines
+Total: ${totalTarget} lines.`,
       }],
     }),
   })
 
   const groqData = await groqRes.json()
-  const text = groqData.choices?.[0]?.message?.content || '[]'
+  const text = groqData.choices?.[0]?.message?.content || '{}'
   const clean = text.replace(/```json|```/g, '').trim()
-  let events = JSON.parse(clean)
-  if (!Array.isArray(events)) events = []
-  events = events.slice(0, 3)
+  const parsed = JSON.parse(clean)
+  const weather_mood = parsed.weather_mood || 'cloudy'
 
-  await sql`DELETE FROM portfolio_world_events WHERE source_type = 'ai'`
+  let events = []
+  for (const realm of ['north', 'middle', 'south']) {
+    const list = Array.isArray(parsed[realm]) ? parsed[realm] : []
+    const capped = list.slice(0, realmCounts[realm]).map(ev => normalizeRealmEvent(ev, realm))
+    events = events.concat(capped)
+  }
+
+  await sql`DELETE FROM portfolio_world_events WHERE source_type IN ('ai', 'system')`
+
+  await sql`
+    INSERT INTO portfolio_world_events (headline, summary, location_name, x_percent, y_percent, source_type)
+    VALUES (
+      '__BROADCAST_STATUS__',
+      ${JSON.stringify({ weather_mood, broadcast_day: worldDate })},
+      'Station',
+      50,
+      50,
+      'system'
+    )`
 
   for (const ev of events) {
     await sql`
@@ -393,8 +490,20 @@ Write exactly 3 breaking broadcast lines for right now.`,
       VALUES (${ev.headline}, ${ev.summary}, ${ev.location_name}, ${ev.x_percent}, ${ev.y_percent}, 'ai')`
   }
 
-  const rows = await sql`SELECT * FROM portfolio_world_events ORDER BY created_at DESC LIMIT 20`
-  return { message: 'Daily broadcast published', count: events.length, broadcast_day: worldDate, events: rows }
+  const rows = await sql`
+    SELECT * FROM portfolio_world_events
+    WHERE source_type != 'system'
+    ORDER BY created_at DESC LIMIT 40`
+  return {
+    message: 'Daily broadcast published',
+    count: events.length,
+    realm_counts: realmCounts,
+    broadcast_day: worldDate,
+    worldTime,
+    season,
+    weather_mood,
+    events: rows,
+  }
 }
 
 const handleBroadcast = async (req, res) => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api, { setAuthToken } from '../utils/api'
+import { getWorldClock } from '../utils/worldClock'
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 const s = {
@@ -97,6 +98,8 @@ export default function Admin() {
 })
 
 const [editingEvent, setEditingEvent] = useState(null)
+  const [broadcastClock, setBroadcastClock] = useState(() => getWorldClock())
+  const [broadcastWeather, setBroadcastWeather] = useState(null)
 
   useEffect(() => {
     // Local `npm run dev` only — never active on Vercel production build
@@ -107,6 +110,21 @@ const [editingEvent, setEditingEvent] = useState(null)
     const token = localStorage.getItem('portfolio_token')
     if (token) { setAuthToken(token); setUnlocked(true); fetchAll() }
   }, [])
+
+  useEffect(() => {
+    const tick = setInterval(() => setBroadcastClock(getWorldClock()), 1000)
+    return () => clearInterval(tick)
+  }, [])
+
+  const loadBroadcastStatus = () => {
+    api.get('/api/world/status')
+      .then(res => { if (res.data?.weather_mood) setBroadcastWeather(res.data.weather_mood) })
+      .catch(() => {})
+  }
+
+  useEffect(() => {
+    if (unlocked && tab === 'world') loadBroadcastStatus()
+  }, [unlocked, tab])
 
   const fetchAll = async () => {
     try {
@@ -264,7 +282,10 @@ const [editingEvent, setEditingEvent] = useState(null)
     try {
       const res = await api.post('/api/world/refresh', {})
       setWorldEvents(res.data.events || [])
-      showSuccess(`Today's broadcast: ${res.data.count ?? 3} lines published`)
+      if (res.data.weather_mood) setBroadcastWeather(res.data.weather_mood)
+      const rc = res.data.realm_counts
+      const spread = rc ? `N${rc.north} M${rc.middle} S${rc.south}` : ''
+      showSuccess(`Broadcast: ${res.data.count} lines ${spread} · ${res.data.weather_mood || '—'}`)
     }
     catch (err) { console.error(err); showSuccess('Broadcast failed — check GROQ_API_KEY') }
     finally { setRefreshing(false) }
@@ -567,10 +588,19 @@ const handleDeleteEvent = async (id) => {
   <div style={s.section}>
     <h2 style={s.sectionTitle}>WORLD CONTROL</h2>
 
+    <div style={{ background: '#0a0a12', border: '1px solid #1a1a2e', padding: '1rem 1.25rem', fontFamily: 'monospace', fontSize: '0.75rem', color: '#888', lineHeight: 1.7 }}>
+      <p style={{ ...s.label, color: '#4fc3f7', marginBottom: '0.5rem' }}>// STATION CLOCK (LIVE)</p>
+      <p style={{ color: '#e8e8e0' }}>{broadcastClock.worldDate}</p>
+      <p style={{ color: '#e8e8e0' }}>{broadcastClock.worldTime}</p>
+      <p>{broadcastClock.season}{broadcastWeather ? ` · ${broadcastWeather}` : ' · run broadcast for weather'}</p>
+    </div>
+
+    <div style={s.divider} />
+
     {/* AI Refresh */}
     <div style={{ background: '#0a0a12', border: '1px solid #1a1a2e', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       <p style={{ ...s.label, color: '#4fc3f7' }}>// DAILY AI BROADCAST (GROQ)</p>
-      <p style={s.hint}>Deletes old AI news, posts 3 new bulletins from your manual canon + today&apos;s date (2070) / season / weather. Auto-runs UTC midnight.</p>
+      <p style={s.hint}>Deletes old AI news. Each realm gets 2–5 random bulletins (6–15 total). Uses manual canon + 2070 date / season / weather. UTC midnight cron.</p>
       <button style={{ ...s.primaryBtn, opacity: refreshing ? 0.6 : 1, background: refreshing ? '#333' : '#4fc3f7' }} onClick={handleWorldRefresh} disabled={refreshing}>
         {refreshing ? 'BROADCASTING...' : '⚡ RUN TODAY\'S BROADCAST'}
       </button>
