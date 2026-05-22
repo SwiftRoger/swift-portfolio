@@ -3,6 +3,12 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    bio TEXT DEFAULT '',
+    birth_city VARCHAR(100) DEFAULT '',
+    age INTEGER DEFAULT NULL,
+    power_level VARCHAR(50) DEFAULT 'None',
+    avatar_url TEXT DEFAULT '',
+    avatar_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

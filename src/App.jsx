@@ -11,12 +11,14 @@ import World from './pages/World';
 import Admin from './pages/Admin';
 import Auth from './pages/Auth';
 import CreateCharacter from './pages/CreateCharacter';
+import Profile from './pages/Profile';
 
 export default function App() {
   const isAdmin = window.location.pathname === '/admin' || window.location.hash === '#/admin';
   const isAuth = window.location.pathname === '/auth' || window.location.hash === '#/auth';
   const isCreateChar = window.location.pathname === '/create-character' || window.location.hash === '#/create-character';
-  const [page, setPage] = useState(isAdmin ? 'admin' : isAuth ? 'auth' : isCreateChar ? 'create-character' : 'landing');
+  const isProfile = window.location.pathname === '/profile' || window.location.hash === '#/profile';
+  const [page, setPage] = useState(isAdmin ? 'admin' : isAuth ? 'auth' : isCreateChar ? 'create-character' : isProfile ? 'profile' : 'landing');
 
   const goBack = () => setPage('landing');
 
@@ -34,6 +36,7 @@ export default function App() {
         {page === 'admin' && <Admin />}
         {page === 'auth' && <Auth onBack={goBack} />}
         {page === 'create-character' && <CreateCharacter onBack={goBack} />}
+        {page === 'profile' && <Profile onBack={goBack} />}
       </div>
     </AuthProvider>
   );

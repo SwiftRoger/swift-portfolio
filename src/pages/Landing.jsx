@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useAuth } from '../contexts/AuthContext'
 
 // ── 3D SCENE ─────────────────────────────────────────────────────────────────
 
@@ -255,19 +256,20 @@ export default function Landing({ onEnter }) {
   const [tunneling, setTunneling] = useState(null)
   const [ready, setReady] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
 
   useEffect(() => {
-  const loadingTimer = setTimeout(() => {
-    setLoading(false)
+    const loadingTimer = setTimeout(() => {
+      setLoading(false)
 
-    setTimeout(() => {
-      setReady(true)
-    }, 50)
+      setTimeout(() => {
+        setReady(true)
+      }, 50)
 
-  }, 1800)
+    }, 1800)
 
-  return () => clearTimeout(loadingTimer)
-}, [])
+    return () => clearTimeout(loadingTimer)
+  }, [])
 
   return (
   <>
@@ -430,25 +432,40 @@ export default function Landing({ onEnter }) {
       {/* Scanline */}
       <div style={{ position: 'fixed', left: 0, right: 0, height: '2px', zIndex: 3, pointerEvents: 'none', background: 'linear-gradient(to bottom, transparent, rgba(160,130,255,0.04), transparent)', animation: 'scanline 9s linear infinite' }} />
 
-      {/* Header */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-        padding: '1.8rem 2.5rem 1.5rem',
-        background: 'linear-gradient(to bottom, rgba(6,5,10,0.97) 60%, transparent)',
-        pointerEvents: 'none',
-        animation: ready ? 'fadeInDown 0.9s ease forwards' : 'none',
-      }}>
-        <div>
-          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.48rem', color: 'rgba(200,184,154,0.25)', letterSpacing: '0.5em', marginBottom: '0.4rem' }}>// TERMINUS STATION</p>
-          <p style={{ fontFamily: '"Cormorant Garamond",serif', fontSize: 'clamp(1.2rem,2vw,1.6rem)', color: 'rgba(232,224,208,0.9)', fontWeight: 300, letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Swift Caulfield</p>
-          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.42rem', color: 'rgba(200,184,154,0.15)', letterSpacing: '0.35em' }}>EXPLORE. DISCOVER. REMEMBER.</p>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.08)', letterSpacing: '0.35em', marginBottom: '0.25rem' }}>PLATFORM DIRECTORY</p>
-          <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.05)', letterSpacing: '0.25em' }}>01 — 07 DEPARTURES</p>
-        </div>
-      </div>
+       {/* Header */}
+       <div style={{
+         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
+         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+         padding: '1.8rem 2.5rem 1.5rem',
+         background: 'linear-gradient(to bottom, rgba(6,5,10,0.97) 60%, transparent)',
+         pointerEvents: 'none',
+         animation: ready ? 'fadeInDown 0.9s ease forwards' : 'none',
+       }}>
+         <div>
+           <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.48rem', color: 'rgba(200,184,154,0.25)', letterSpacing: '0.5em', marginBottom: '0.4rem' }}>// TERMINUS STATION</p>
+           <p style={{ fontFamily: '"Cormorant Garamond",serif', fontSize: 'clamp(1.2rem,2vw,1.6rem)', color: 'rgba(232,224,208,0.9)', fontWeight: 300, letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Swift Caulfield</p>
+           <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.42rem', color: 'rgba(200,184,154,0.15)', letterSpacing: '0.35em' }}>EXPLORE. DISCOVER. REMEMBER.</p>
+         </div>
+         <div style={{ textAlign: 'right' }}>
+           {/* User profile when logged in */}
+           {user && (
+             <>
+               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.08)', letterSpacing: '0.35em', marginBottom: '0.25rem' }}>// PROFILE</p>
+               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.05)', letterSpacing: '0.25em' }}>{user.username}</p>
+               {user.avatar_url && user.avatar_approved && (
+                 <img src={user.avatar_url} alt="Avatar" style={{ width: '24px', height: '24px', borderRadius: '50%', marginLeft: '0.5rem' }} />
+               )}
+             </>
+           )}
+           {/* Platform directory when not logged in */}
+           {!user && (
+             <>
+               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.08)', letterSpacing: '0.35em', marginBottom: '0.25rem' }}>PLATFORM DIRECTORY</p>
+               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.05)', letterSpacing: '0.25em' }}>01 — 07 DEPARTURES</p>
+             </>
+           )}
+         </div>
+       </div>
 
       {/* Main */}
       <div style={{

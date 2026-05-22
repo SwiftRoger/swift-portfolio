@@ -26,8 +26,8 @@ router.post('/signup', async (req, res) => {
     
     // Create user
     const result = await db.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
-      [username, email, passwordHash]
+      'INSERT INTO users (username, email, password_hash, bio, birth_city, age, power_level) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, email, bio, birth_city, age, power_level, created_at',
+      [username, email, passwordHash, '', '', null, 'None']
     );
     
     // Create default character for user
@@ -90,6 +90,10 @@ router.post('/login', async (req, res) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        bio: user.bio,
+        birth_city: user.birth_city,
+        age: user.age,
+        power_level: user.power_level,
         createdAt: user.created_at
       }
     });
