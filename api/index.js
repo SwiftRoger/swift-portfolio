@@ -708,6 +708,12 @@ app.put('/api/auth/admin/avatar/:userId/approve', auth, async (req, res) => {
     if (!req.user.admin) return res.status(403).json({ message: 'Admin access required' })
     const { approved } = req.body
     await sql`UPDATE users SET avatar_approved = ${approved}, updated_at = NOW() WHERE id = ${req.params.userId}`
+    if (approved) {
+      const userResult = await sql`SELECT avatar_url FROM users WHERE id = ${req.params.userId}`
+      if (userResult[0]?.avatar_url) {
+        await sql`UPDATE characters SET image_url = ${userResult[0].avatar_url} WHERE user_id = ${req.params.userId}`
+      }
+    }
     res.json({ message: `Avatar ${approved ? 'approved' : 'rejected'}` })
   } catch (error) {
     console.error('Avatar approval error:', error)
