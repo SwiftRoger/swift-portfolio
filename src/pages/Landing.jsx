@@ -329,6 +329,11 @@ export default function Landing({ onEnter }) {
         from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
           }
+        @media (max-width: 600px) {
+          .icon-ring { width: 52px !important; height: 52px !important; }
+          .icon-ring svg { width: 18px !important; height: 18px !important; }
+          .portal-title { font-size: clamp(0.8rem, 3vw, 1.2rem) !important; }
+        }  
 
         .portal {
           border-radius: 50%;
@@ -482,16 +487,16 @@ export default function Landing({ onEnter }) {
       }}>
 
         {/* 3 Portals */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.8rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(0.5rem, 2vw, 1.8rem)' }}>
           {PORTALS.map((p, i) => {
             const isCenter = p.id === 'story'
-            const size = isCenter ? 320 : 220
+            const size = isCenter ? 'min(320px, 38vw)' : 'min(220px, 26vw)'
             const faded = hovered && hovered !== p.id
             return (
               <div
                 key={p.id}
                 className="portal"
-                onClick={() => setTunneling(p.id)}
+                onClick={() => onEnter(p.id)}
                 onMouseEnter={() => setHovered(p.id)}
                 onMouseLeave={() => setHovered(null)}
                 style={{
@@ -522,7 +527,7 @@ export default function Landing({ onEnter }) {
         {!user && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', animation: ready ? 'iconRise 0.7s ease 0.5s both' : 'none' }}>
             <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', letterSpacing: '0.45em', color: 'rgba(200,184,154,0.4)', animation: 'breathe 3s ease infinite' }}>// BEGIN YOUR JOURNEY</p>
-            <div className="icon-btn" onClick={() => setTunneling('auth')} style={{ transform: 'scale(1.3)', marginBottom: '0.5rem' }}>
+            <div className="icon-btn" onClick={() => onEnter('auth')} style={{ transform: 'scale(1.3)', marginBottom: '0.5rem' }}>
               <div className="icon-ring" style={{ width: '88px', height: '88px', border: '1px solid rgba(200,180,255,0.25)', boxShadow: '0 0 30px rgba(160,130,255,0.12)', animation: 'rimPulse 3s ease infinite' }}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '28px', height: '28px', color: 'rgba(200,184,154,0.7)' }}><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
               </div>
@@ -532,11 +537,11 @@ export default function Landing({ onEnter }) {
         )}
 
         {/* 4 Icon buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', animation: ready ? 'iconRise 0.7s ease 0.65s both' : 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(0.75rem, 3vw, 2rem)', flexWrap: 'wrap', padding: '0 1rem', animation: ready ? 'iconRise 0.7s ease 0.65s both' : 'none' }}>
           {ICONS.map((item) => {
             if (item.id === 'auth' && !user) return null
             return (
-              <div key={item.id} className="icon-btn" onClick={() => setTunneling(item.id === 'auth' && user ? 'profile' : item.id)}>
+              <div key={item.id} className="icon-btn" onClick={() => onEnter(item.id === 'auth' && user ? 'profile' : item.id)}>
                 <div className="icon-ring">{item.svg}</div>
                 <p className="icon-label">{item.label}</p>
               </div>
@@ -547,10 +552,7 @@ export default function Landing({ onEnter }) {
       </div>
 
       {/* Tunnel */}
-      <TunnelTransition
-        active={!!tunneling}
-        onComplete={() => { onEnter(tunneling); setTunneling(null) }}
-      />
+      {tunneling && (() => { onEnter(tunneling); setTunneling(null); return null; })()}
         </div>
   </>
   )
