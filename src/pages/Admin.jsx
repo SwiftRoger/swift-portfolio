@@ -108,7 +108,7 @@ const [editingEvent, setEditingEvent] = useState(null)
       setUnlocked(true)
       return
     }
-    const token = localStorage.getItem('portfolio_token')
+    const token = localStorage.getItem('admin_token')
     if (token) { setAuthToken(token); setUnlocked(true); fetchAll() }
   }, [])
 
@@ -154,6 +154,7 @@ const [editingEvent, setEditingEvent] = useState(null)
     try {
       const res = await api.post('/api/auth/admin/login', { password: passwordInput })
       setAuthToken(res.data.token)
+      localStorage.setItem('admin_token', res.data.token)
       setUnlocked(true)
       fetchAll()
     } catch { setPasswordError(true) }
@@ -409,7 +410,7 @@ const [editingEvent, setEditingEvent] = useState(null)
         <div style={s.headerRight}>
           {import.meta.env.DEV && <p style={s.hint}>LOCAL DEV — login skipped</p>}
           {success && <p style={s.success}>{success}</p>}
-          <button style={s.logoutBtn} onClick={() => { setAuthToken(null); setUnlocked(false) }}>LOGOUT</button>
+          <button style={s.logoutBtn} onClick={() => { setAuthToken(null); localStorage.removeItem('admin_token'); setUnlocked(false) }}>LOGOUT</button>
           <a href='/' style={s.backBtn}>← BACK TO SITE</a>
         </div>
       </header>
