@@ -450,14 +450,14 @@ export default function Landing({ onEnter }) {
            {/* User profile when logged in */}
            {user && (
              <>
-               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.08)', letterSpacing: '0.35em', marginBottom: '0.25rem' }}>// PROFILE</p>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.35em', marginBottom: '0.4rem' }}>// IDENTITY</p>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
                  {user.avatar_url && user.avatar_approved && (
-                   <img src={user.avatar_url} alt="Avatar" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+                   <img src={user.avatar_url} alt="Avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 0 12px rgba(200,180,255,0.2)', animation: 'breathe 3s ease infinite' }} />
                  )}
-                 <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.44rem', color: 'rgba(255,255,255,0.05)', letterSpacing: '0.25em' }}>{user.username}</p>
+                 <p style={{ fontFamily: '"Cormorant Garamond",serif', fontSize: '1rem', color: 'rgba(232,224,208,0.75)', letterSpacing: '0.15em', fontWeight: 300 }}>{user.username}</p>
                </div>
-               <button onClick={() => { localStorage.removeItem('portfolio_token'); window.location.reload() }} style={{ background: 'none', border: '1px solid rgba(255,100,100,0.2)', color: 'rgba(255,100,100,0.35)', fontFamily: '"Space Mono",monospace', fontSize: '0.38rem', letterSpacing: '0.25em', cursor: 'pointer', padding: '0.2rem 0.6rem', marginTop: '0.3rem', pointerEvents: 'all' }}>LOGOUT</button>
+               <button onClick={() => { localStorage.removeItem('portfolio_token'); window.location.reload() }} style={{ background: 'none', border: '1px solid rgba(255,100,100,0.2)', color: 'rgba(255,100,100,0.35)', fontFamily: '"Space Mono",monospace', fontSize: '0.45rem', letterSpacing: '0.25em', cursor: 'pointer', padding: '0.25rem 0.75rem', pointerEvents: 'all', float: 'right' }}>LOGOUT</button>
              </>
            )}
            {/* Platform directory when not logged in */}
