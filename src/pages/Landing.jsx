@@ -454,16 +454,33 @@ export default function Landing({ onEnter }) {
          <div style={{ textAlign: 'right' }}>
            {/* User profile when logged in */}
            {user && (
-             <>
-               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.35em', marginBottom: '0.4rem' }}>// IDENTITY</p>
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+             <div style={{ position: 'relative', pointerEvents: 'all' }}
+               onMouseEnter={e => e.currentTarget.querySelector('.identity-dropdown').style.opacity = '1'}
+               onMouseLeave={e => e.currentTarget.querySelector('.identity-dropdown').style.opacity = '0'}
+             >
+               <div onClick={() => onEnter('profile')} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'flex-end', cursor: 'pointer', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }}
+                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+               >
                  {user.avatar_url && user.avatar_approved && (
                    <img src={user.avatar_url} alt="Avatar" style={{ width: '42px', height: '42px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 0 12px rgba(200,180,255,0.2)', animation: 'breathe 3s ease infinite' }} />
                  )}
-                 <p style={{ fontFamily: '"Cormorant Garamond",serif', fontSize: '1rem', color: 'rgba(232,224,208,0.75)', letterSpacing: '0.15em', fontWeight: 300 }}>{user.username}</p>
+                 <div>
+                   <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.45rem', color: 'rgba(255,255,255,0.25)', letterSpacing: '0.35em', marginBottom: '0.2rem' }}>// IDENTITY</p>
+                   <p style={{ fontFamily: '"Cormorant Garamond",serif', fontSize: '1rem', color: 'rgba(232,224,208,0.75)', letterSpacing: '0.15em', fontWeight: 300 }}>{user.username}</p>
+                 </div>
                </div>
-               <button onClick={() => { localStorage.removeItem('portfolio_token'); window.location.reload() }} style={{ background: 'none', border: '1px solid rgba(255,100,100,0.2)', color: 'rgba(255,100,100,0.35)', fontFamily: '"Space Mono",monospace', fontSize: '0.45rem', letterSpacing: '0.25em', cursor: 'pointer', padding: '0.25rem 0.75rem', pointerEvents: 'all', float: 'right' }}>LOGOUT</button>
-             </>
+               <div className="identity-dropdown" style={{ opacity: 0, transition: 'opacity 0.2s', position: 'absolute', top: '100%', right: 0, marginTop: '0.25rem', background: 'rgba(6,5,10,0.97)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', overflow: 'hidden', minWidth: '140px', zIndex: 100 }}>
+                 <div onClick={() => onEnter('profile')} style={{ padding: '0.65rem 1rem', fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(200,184,154,0.7)', letterSpacing: '0.2em', cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.15s' }}
+                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                 >PROFILE</div>
+                 <div onClick={() => { localStorage.removeItem('portfolio_token'); window.location.reload(); }} style={{ padding: '0.65rem 1rem', fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(255,100,100,0.6)', letterSpacing: '0.2em', cursor: 'pointer', transition: 'background 0.15s' }}
+                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,60,60,0.08)'}
+                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                 >LOGOUT</div>
+               </div>
+             </div>
            )}
            {/* Platform directory when not logged in */}
            {!user && (

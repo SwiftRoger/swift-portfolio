@@ -10,6 +10,7 @@ export default function Profile({ onBack }) {
   const [avatarApproved, setAvatarApproved] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [crop, setCrop] = useState();
+  const [cropShape, setCropShape] = useState('square');
   const [completedCrop, setCompletedCrop] = useState();
   const imgRef = useRef(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -118,13 +119,16 @@ export default function Profile({ onBack }) {
           )}
 
           <input type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: 'block', margin: '0 auto 1rem', padding: '0.5rem 1rem', background: 'rgba(6,5,10,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e8e0d0', fontFamily: '"Space Mono", monospace', fontSize: '0.85rem', cursor: 'pointer' }} />
-
-          {avatarPreview && (
+{avatarPreview && (
             <div style={{ marginBottom: '1rem' }}>
-              <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)} aspect={1} style={{ maxWidth: '100%' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                <button type="button" onClick={() => setCropShape('square')} style={{ background: 'none', border: `1px solid ${cropShape === 'square' ? '#4fc3f7' : 'rgba(255,255,255,0.1)'}`, color: cropShape === 'square' ? '#4fc3f7' : 'rgba(200,184,154,0.4)', fontFamily: '"Space Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', padding: '0.3rem 0.75rem', cursor: 'pointer' }}>SQUARE</button>
+                <button type="button" onClick={() => setCropShape('circle')} style={{ background: 'none', border: `1px solid ${cropShape === 'circle' ? '#4fc3f7' : 'rgba(255,255,255,0.1)'}`, color: cropShape === 'circle' ? '#4fc3f7' : 'rgba(200,184,154,0.4)', fontFamily: '"Space Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', padding: '0.3rem 0.75rem', cursor: 'pointer' }}>CIRCLE</button>
+              </div>
+              <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)} aspect={1} circularCrop={cropShape === 'circle'} style={{ maxWidth: '100%' }}>
                 <img ref={imgRef} src={avatarPreview} alt="Crop preview" onLoad={onImageLoad} style={{ maxWidth: '100%', maxHeight: '300px' }} />
               </ReactCrop>
-              <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.6rem', color: 'rgba(200,184,154,0.4)', letterSpacing: '0.15em', marginTop: '0.5rem' }}>DRAG TO CROP · SQUARE</p>
+              <p style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.6rem', color: 'rgba(200,184,154,0.4)', letterSpacing: '0.15em', marginTop: '0.5rem' }}>DRAG TO CROP · {cropShape.toUpperCase()}</p>
             </div>
           )}
 
