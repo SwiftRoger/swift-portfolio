@@ -277,65 +277,15 @@ export default function Profile({ onBack }) {
         </div>
 
         {/* Profile Form */}
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          handleSaveProfile();
-        }}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
           <div style={{ marginBottom: '1.5rem' }}>
-            <label
-              htmlFor="bio"
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                color: 'rgba(200,184,154,0.6)',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.8rem',
-                letterSpacing: '0.1em'
-              }}
-            >
-              BIOGRAPHY
-            </label>
-            <textarea
-              id="bio"
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(6,5,10,0.6)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '4px',
-                color: '#e8e0d0',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.9rem',
-                outline: 'none'
-              }}
-            />
+            <label htmlFor="bio" style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(200,184,154,0.6)', fontFamily: '"Space Mono", monospace', fontSize: '0.8rem', letterSpacing: '0.1em' }}>BIOGRAPHY</label>
+            <textarea id="bio" name="bio" value={form.bio} onChange={handleChange} rows={4} style={{ width: '100%', padding: '0.75rem', background: 'rgba(6,5,10,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e8e0d0', fontFamily: '"Space Mono", monospace', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }} />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label
-              htmlFor="birth_city"
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                color: 'rgba(200,184,154,0.6)',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.8rem',
-                letterSpacing: '0.1em'
-              }}
-            >
-              BIRTH CITY
-            </label>
-            <select
-              id="birth_city"
-              name="birth_city"
-              value={form.birth_city}
-              onChange={handleChange}
-              style={{ width: '100%', padding: '0.75rem', background: 'rgba(6,5,10,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e8e0d0', fontFamily: '"Space Mono", monospace', fontSize: '0.9rem', outline: 'none' }}
-            >
+            <label htmlFor="birth_city" style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(200,184,154,0.6)', fontFamily: '"Space Mono", monospace', fontSize: '0.8rem', letterSpacing: '0.1em' }}>BIRTH CITY</label>
+            <select id="birth_city" name="birth_city" value={form.birth_city} onChange={handleChange} style={{ width: '100%', padding: '0.75rem', background: 'rgba(6,5,10,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e8e0d0', fontFamily: '"Space Mono", monospace', fontSize: '0.9rem', outline: 'none' }}>
               <option value="">— Select a city —</option>
               <optgroup label="Valkenheim">
                 <option value="Frostgate">Frostgate</option>
@@ -369,87 +319,16 @@ export default function Profile({ onBack }) {
                 <option value="Last Buoy">Last Buoy</option>
               </optgroup>
             </select>
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(6,5,10,0.6)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '4px',
-                color: '#e8e0d0',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.9rem',
-                outline: 'none'
-              }}
-            />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label
-              htmlFor="age"
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                color: 'rgba(200,184,154,0.6)',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.8rem',
-                letterSpacing: '0.1em'
-              }}
-            >
-              AGE
-            </label>
-            <input
-              type="number"
-              id="age"
-              name="age"
-              value={form.age}
-              onChange={handleChange}
-              min="0"
-              max="150"
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(6,5,10,0.6)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '4px',
-                color: '#e8e0d0',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.9rem',
-                outline: 'none'
-              }}
-            />
+            <label htmlFor="age" style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(200,184,154,0.6)', fontFamily: '"Space Mono", monospace', fontSize: '0.8rem', letterSpacing: '0.1em' }}>AGE</label>
+            <input type="number" id="age" name="age" value={form.age} onChange={handleChange} min="0" max="150" style={{ width: '100%', padding: '0.75rem', background: 'rgba(6,5,10,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e8e0d0', fontFamily: '"Space Mono", monospace', fontSize: '0.9rem', outline: 'none' }} />
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label
-              htmlFor="power_level"
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-                color: 'rgba(200,184,154,0.6)',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.8rem',
-                letterSpacing: '0.1em'
-              }}
-            >
-              POWER LEVEL
-            </label>
-            <select
-              id="power_level"
-              name="power_level"
-              value={form.power_level}
-              onChange={handleChange}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                background: 'rgba(6,5,10,0.6)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '4px',
-                color: '#e8e0d0',
-                fontFamily: '"Space Mono", monospace',
-                fontSize: '0.9rem',
-                outline: 'none'
-              }}
-            >
+            <label htmlFor="power_level" style={{ display: 'block', marginBottom: '0.5rem', color: 'rgba(200,184,154,0.6)', fontFamily: '"Space Mono", monospace', fontSize: '0.8rem', letterSpacing: '0.1em' }}>POWER LEVEL</label>
+            <select id="power_level" name="power_level" value={form.power_level} onChange={handleChange} style={{ width: '100%', padding: '0.75rem', background: 'rgba(6,5,10,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e8e0d0', fontFamily: '"Space Mono", monospace', fontSize: '0.9rem', outline: 'none' }}>
               <option value="None">None</option>
               <option value="Minor">Minor</option>
               <option value="Moderate">Moderate</option>
@@ -458,56 +337,10 @@ export default function Profile({ onBack }) {
             </select>
           </div>
 
-          {saveError && (
-            <div style={{
-              background: 'rgba(198,40,40,0.2)',
-              border: '1px solid rgba(198,40,40,0.3)',
-              color: '#ff6b6b',
-              padding: '0.75rem',
-              borderRadius: '4px',
-              marginTop: '1rem',
-              fontFamily: '"Space Mono", monospace',
-              fontSize: '0.85rem',
-              textAlign: 'center'
-            }}>
-              {saveError}
-            </div>
-          )}
-          
-          {saveSuccess && (
-            <div style={{
-              background: 'rgba(68,255,136,0.2)',
-              border: '1px solid rgba(68,255,136,0.3)',
-              color: '#44ff88',
-              padding: '0.75rem',
-              borderRadius: '4px',
-              marginTop: '1rem',
-              fontFamily: '"Space Mono", monospace',
-              fontSize: '0.85rem',
-              textAlign: 'center'
-            }}>
-              {saveSuccess}
-            </div>
-          )}
+          {saveError && <div style={{ background: 'rgba(198,40,40,0.2)', border: '1px solid rgba(198,40,40,0.3)', color: '#ff6b6b', padding: '0.75rem', borderRadius: '4px', marginTop: '1rem', fontFamily: '"Space Mono", monospace', fontSize: '0.85rem', textAlign: 'center' }}>{saveError}</div>}
+          {saveSuccess && <div style={{ background: 'rgba(68,255,136,0.2)', border: '1px solid rgba(68,255,136,0.3)', color: '#44ff88', padding: '0.75rem', borderRadius: '4px', marginTop: '1rem', fontFamily: '"Space Mono", monospace', fontSize: '0.85rem', textAlign: 'center' }}>{saveSuccess}</div>}
 
-          <button
-            type="submit"
-            style={{
-              width: '100%',
-              padding: '0.9rem',
-              background: saving ? '#666' : '#4fc3f7',
-              border: 'none',
-              color: '#000',
-              fontFamily: '"Space Mono", monospace',
-              fontWeight: '600',
-              fontSize: '0.9rem',
-              letterSpacing: '0.2em',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              opacity: saving ? 0.7 : 1,
-              transition: 'all 0.2s'
-            }}
-            disabled={saving}
-          >
+          <button type="submit" style={{ width: '100%', padding: '0.9rem', background: saving ? '#666' : '#4fc3f7', border: 'none', color: '#000', fontFamily: '"Space Mono", monospace', fontWeight: '600', fontSize: '0.9rem', letterSpacing: '0.2em', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s' }} disabled={saving}>
             {saving ? 'Saving...' : 'SAVE PROFILE'}
           </button>
         </form>
