@@ -86,6 +86,18 @@ export default function Admin() {
   const [locForm, setLocForm] = useState({ name: '', description: '', x_percent: 50, y_percent: 50, type: 'city' })
   const [refreshing, setRefreshing] = useState(false)
 
+  const [eventForm, setEventForm] = useState({
+  headline: '',
+  summary: '',
+  location_name: '',
+  x_percent: 50,
+  y_percent: 50,
+  realm: 'middle',
+  source_type: 'manual'
+})
+
+const [editingEvent, setEditingEvent] = useState(null)
+
   useEffect(() => {
     const token = localStorage.getItem('portfolio_token')
     if (token) { setAuthToken(token); setUnlocked(true); fetchAll() }
@@ -248,6 +260,61 @@ export default function Admin() {
     catch (err) { console.error(err); showSuccess('Groq refresh failed — check API key') }
     finally { setRefreshing(false) }
   }
+
+  const handleSaveEvent = async () => {
+  setSaving(true)
+
+  try {
+    if (editingEvent) {
+      const res = await api.put(
+        `/api/world/events/${editingEvent.id}`,
+        eventForm
+      )
+
+      setWorldEvents(prev =>
+        prev.map(event =>
+          event.id === editingEvent.id ? res.data : event
+        )
+      )
+
+      setEditingEvent(null)
+    } else {
+      const res = await api.post('/api/world/events', eventForm)
+
+      setWorldEvents(prev => [res.data, ...prev])
+    }
+
+    setEventForm({
+      headline: '',
+      summary: '',
+      location_name: '',
+      x_percent: 50,
+      y_percent: 50,
+      realm: 'middle',
+      source_type: 'manual'
+    })
+
+    showSuccess('Event saved!')
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setSaving(false)
+  }
+}
+
+const handleDeleteEvent = async (id) => {
+  try {
+    await api.delete(`/api/world/events/${id}`)
+
+    setWorldEvents(prev =>
+      prev.filter(event => event.id !== id)
+    )
+
+    showSuccess('Deleted!')
+  } catch (err) {
+    console.error(err)
+  }
+}
 
   const handleAddLocation = async () => {
     if (!locForm.name) return
@@ -486,65 +553,152 @@ export default function Admin() {
             </div>
           )}
 
-          {/* ── WORLD ── */}
           {tab === 'world' && (
-            <div style={s.section}>
-              <h2 style={s.sectionTitle}>WORLD CONTROL</h2>
+  <div style={s.section}>
+    <h2 style={s.sectionTitle}>WORLD CONTROL</h2>
 
-              {/* AI Refresh */}
-              <div style={{ background: '#0a0a12', border: '1px solid #1a1a2e', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <p style={{ ...s.label, color: '#4fc3f7' }}>// AI EVENT GENERATOR (GROQ)</p>
-                <p style={s.hint}>
-                  Fetches real-world news and rewrites it as lore events in the Land of Three.<br />
-                  Run this manually here, or set up a cron job to hit /api/world/refresh hourly.
-                </p>
-                <button style={{ ...s.primaryBtn, opacity: refreshing ? 0.6 : 1, background: refreshing ? '#333' : '#4fc3f7' }} onClick={handleWorldRefresh} disabled={refreshing}>
-                  {refreshing ? 'GENERATING WORLD EVENTS...' : '⚡ REFRESH WORLD NOW'}
-                </button>
-              </div>
+    {/* AI Refresh */}
+    <div style={{ background: '#0a0a12', border: '1px solid #1a1a2e', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      <p style={{ ...s.label, color: '#4fc3f7' }}>// AI EVENT GENERATOR (GROQ)</p>
+      <p style={s.hint}>Fetches real-world news and rewrites it as lore events in the Land of Three.</p>
+      <button style={{ ...s.primaryBtn, opacity: refreshing ? 0.6 : 1, background: refreshing ? '#333' : '#4fc3f7' }} onClick={handleWorldRefresh} disabled={refreshing}>
+        {refreshing ? 'GENERATING...' : '⚡ REFRESH WORLD NOW'}
+      </button>
+    </div>
 
-              {/* Current events */}
-              <div style={s.divider} />
-              <h3 style={{ ...s.label, fontSize: '0.8rem', color: '#e8e8e0' }}>CURRENT AI EVENTS ({worldEvents.length})</h3>
-              <div style={s.itemList}>
-                {worldEvents.map(ev => (
-                  <div key={ev.id} style={s.row}>
-                    <span style={s.tag}>{ev.location_name}</span>
-                    <p style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#e8e8e0', flex: 1 }}>{ev.headline}</p>
-                  </div>
-                ))}
-                {worldEvents.length === 0 && <p style={s.hint}>// No events yet. Hit Refresh World to generate.</p>}
-              </div>
+    <div style={s.divider} />
 
-              {/* Locations */}
-              <div style={s.divider} />
-              <h3 style={{ ...s.label, fontSize: '0.8rem', color: '#e8e8e0' }}>WORLD LOCATIONS (fixed pins)</h3>
-              <p style={s.hint}>x/y are 0–100 percent coordinates on the world map. North = low y, South = high y.</p>
-              {[['NAME', 'name'], ['DESCRIPTION', 'description'], ['X POSITION (0-100)', 'x_percent'], ['Y POSITION (0-100)', 'y_percent']].map(([lbl, key]) => (
-                <div key={key} style={s.field}>
-                  <label style={s.label}>{lbl}</label>
-                  <input style={s.input} type={key.includes('percent') ? 'number' : 'text'} value={locForm[key]} onChange={e => setLocForm({ ...locForm, [key]: key.includes('percent') ? Number(e.target.value) : e.target.value })} />
-                </div>
-              ))}
-              <div style={s.field}>
-                <label style={s.label}>TYPE</label>
-                <select style={s.input} value={locForm.type} onChange={e => setLocForm({ ...locForm, type: e.target.value })}>
-                  {['city', 'landmark', 'ruin', 'dungeon', 'fortress', 'village'].map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <button style={s.primaryBtn} onClick={handleAddLocation}>ADD LOCATION</button>
-              <div style={s.itemList}>
-                {worldLocations.map(loc => (
-                  <div key={loc.id} style={s.row}>
-                    <span style={s.tag}>{loc.type}</span>
-                    <p style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#e8e8e0', flex: 1 }}>{loc.name}</p>
-                    <p style={{ ...s.hint, fontSize: '0.6rem' }}>x:{loc.x_percent} y:{loc.y_percent}</p>
-                    <button style={s.deleteBtn} onClick={() => handleDeleteLocation(loc.id)}>DEL</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+    {/* Manual Event Form */}
+    <h3 style={{ ...s.label, fontSize: '0.8rem', color: '#e8e8e0' }}>
+      {editingEvent ? 'EDIT EVENT' : 'NEW MANUAL EVENT'}
+    </h3>
+
+    <div style={s.field}>
+      <label style={s.label}>HEADLINE</label>
+      <input style={s.input} value={eventForm.headline} onChange={e => setEventForm(p => ({ ...p, headline: e.target.value }))} placeholder='A great war stirs in the north...' />
+    </div>
+
+    <div style={s.field}>
+      <label style={s.label}>SUMMARY</label>
+      <textarea style={{ ...s.input, ...s.textarea }} rows={4} value={eventForm.summary} onChange={e => setEventForm(p => ({ ...p, summary: e.target.value }))} placeholder='Describe the event in detail...' />
+    </div>
+
+    <div style={s.field}>
+      <label style={s.label}>LOCATION NAME</label>
+      <input style={s.input} value={eventForm.location_name} onChange={e => setEventForm(p => ({ ...p, location_name: e.target.value }))} placeholder='e.g. Ironhold Fortress' />
+    </div>
+
+    <div style={s.field}>
+      <label style={s.label}>REALM</label>
+      <select style={s.input} value={eventForm.realm} onChange={e => {
+        const val = e.target.value
+        const yMap = { north: 20, middle: 50, south: 78 }
+        setEventForm(p => ({ ...p, realm: val, y_percent: yMap[val] || p.y_percent }))
+      }}>
+        <option value='north'>The Ashen North</option>
+        <option value='middle'>The Verdant Middle</option>
+        <option value='south'>The Sunken South</option>
+      </select>
+    </div>
+
+    <div style={s.field}>
+      <label style={s.label}>X POSITION — {eventForm.x_percent}%</label>
+      <input type='range' min={5} max={95} value={eventForm.x_percent}
+        onChange={e => setEventForm(p => ({ ...p, x_percent: Number(e.target.value) }))}
+        style={{ width: '100%', accentColor: '#4fc3f7' }} />
+    </div>
+
+    <div style={s.field}>
+      <label style={s.label}>Y POSITION — {eventForm.y_percent}%</label>
+      <input type='range' min={5} max={95} value={eventForm.y_percent}
+        onChange={e => setEventForm(p => ({ ...p, y_percent: Number(e.target.value) }))}
+        style={{ width: '100%', accentColor: '#4fc3f7' }} />
+    </div>
+
+    <div style={s.field}>
+      <label style={s.label}>SOURCE TYPE</label>
+      <select style={s.input} value={eventForm.source_type} onChange={e => setEventForm(p => ({ ...p, source_type: e.target.value }))}>
+        <option value='manual'>Manual (Canon)</option>
+        <option value='ai'>AI (Ambient)</option>
+        <option value='system'>System</option>
+      </select>
+    </div>
+
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <button style={{ ...s.primaryBtn, opacity: saving ? 0.6 : 1 }} onClick={handleSaveEvent} disabled={saving}>
+        {saving ? 'SAVING...' : editingEvent ? 'UPDATE EVENT' : 'CREATE EVENT'}
+      </button>
+      {editingEvent && (
+        <button style={s.secondaryBtn} onClick={() => {
+          setEditingEvent(null)
+          setEventForm({ headline: '', summary: '', location_name: '', x_percent: 50, y_percent: 50, realm: 'middle', source_type: 'manual' })
+        }}>CANCEL</button>
+      )}
+    </div>
+
+    <div style={s.divider} />
+
+    {/* Current Events List */}
+    <h3 style={{ ...s.label, fontSize: '0.8rem', color: '#e8e8e0' }}>
+      WORLD EVENTS ({worldEvents.length})
+    </h3>
+    <div style={s.itemList}>
+      {worldEvents.map(ev => (
+        <div key={ev.id} style={s.row}>
+          <span style={{ ...s.tag, color: ev.source_type === 'manual' ? '#44ff88' : ev.source_type === 'ai' ? '#4fc3f7' : '#888', borderColor: ev.source_type === 'manual' ? '#44ff88' : ev.source_type === 'ai' ? '#4fc3f7' : '#444' }}>
+            {ev.source_type?.toUpperCase()}
+          </span>
+          <span style={s.tag}>{ev.location_name}</span>
+          <p style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#e8e8e0', flex: 1 }}>{ev.headline}</p>
+          <button style={{ ...s.secondaryBtn, padding: '0.2rem 0.6rem', fontSize: '0.6rem' }} onClick={() => {
+            setEditingEvent(ev)
+            setEventForm({
+              headline: ev.headline,
+              summary: ev.summary || '',
+              location_name: ev.location_name,
+              x_percent: ev.x_percent,
+              y_percent: ev.y_percent,
+              realm: ev.y_percent <= 35 ? 'north' : ev.y_percent <= 65 ? 'middle' : 'south',
+              source_type: ev.source_type || 'manual',
+            })
+          }}>EDIT</button>
+          <button style={s.deleteBtn} onClick={() => handleDeleteEvent(ev.id)}>DEL</button>
+        </div>
+      ))}
+      {worldEvents.length === 0 && <p style={s.hint}>// No events yet.</p>}
+    </div>
+
+    <div style={s.divider} />
+
+    {/* Locations */}
+    <h3 style={{ ...s.label, fontSize: '0.8rem', color: '#e8e8e0' }}>WORLD LOCATIONS</h3>
+    <p style={s.hint}>x/y are 0–100 percent coordinates. North = low y, South = high y.</p>
+    {[['NAME', 'name'], ['DESCRIPTION', 'description'], ['X POSITION (0-100)', 'x_percent'], ['Y POSITION (0-100)', 'y_percent']].map(([lbl, key]) => (
+      <div key={key} style={s.field}>
+        <label style={s.label}>{lbl}</label>
+        <input style={s.input} type={key.includes('percent') ? 'number' : 'text'} value={locForm[key]} onChange={e => setLocForm({ ...locForm, [key]: key.includes('percent') ? Number(e.target.value) : e.target.value })} />
+      </div>
+    ))}
+    <div style={s.field}>
+      <label style={s.label}>TYPE</label>
+      <select style={s.input} value={locForm.type} onChange={e => setLocForm({ ...locForm, type: e.target.value })}>
+        {['city', 'landmark', 'ruin', 'dungeon', 'fortress', 'village'].map(t => <option key={t} value={t}>{t}</option>)}
+      </select>
+    </div>
+    <button style={s.primaryBtn} onClick={handleAddLocation}>ADD LOCATION</button>
+    <div style={s.itemList}>
+      {worldLocations.map(loc => (
+        <div key={loc.id} style={s.row}>
+          <span style={s.tag}>{loc.type}</span>
+          <p style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#e8e8e0', flex: 1 }}>{loc.name}</p>
+          <p style={{ ...s.hint, fontSize: '0.6rem' }}>x:{loc.x_percent} y:{loc.y_percent}</p>
+          <button style={s.deleteBtn} onClick={() => handleDeleteLocation(loc.id)}>DEL</button>
+        </div>
+      ))}
+    </div>
+
+  </div>
+)}
 
         </main>
       </div>

@@ -268,6 +268,41 @@ app.get('/api/world/events', async (req, res) => {
   } catch { res.status(500).json({ message: 'Server error' }) }
 })
 
+
+// ── WORLD EVENTS CRUD ─────────────────────────────
+app.post('/api/world/events', auth, async (req, res) => {
+  const { headline, summary, location_name, x_percent, y_percent, source_type } = req.body
+  try {
+    const rows = await sql`
+      INSERT INTO portfolio_world_events (headline, summary, location_name, x_percent, y_percent, source_type)
+      VALUES (${headline}, ${summary}, ${location_name}, ${x_percent}, ${y_percent}, ${source_type || 'manual'})
+      RETURNING *`
+    res.json(rows[0])
+  } catch { res.status(500).json({ message: 'Server error' }) }
+})
+
+app.put('/api/world/events/:id', auth, async (req, res) => {
+  const { headline, summary, location_name, x_percent, y_percent, source_type } = req.body
+  try {
+    const rows = await sql`
+      UPDATE portfolio_world_events
+      SET headline=${headline}, summary=${summary}, location_name=${location_name},
+          x_percent=${x_percent}, y_percent=${y_percent}, source_type=${source_type}
+      WHERE id=${req.params.id} RETURNING *`
+    res.json(rows[0])
+  } catch { res.status(500).json({ message: 'Server error' }) }
+})
+
+app.delete('/api/world/events/:id', auth, async (req, res) => {
+  try {
+    await sql`DELETE FROM portfolio_world_events WHERE id=${req.params.id}`
+    res.json({ message: 'Deleted' })
+  } catch { res.status(500).json({ message: 'Server error' }) }
+})
+
+
+
+
 // Groq AI trigger — called by cron or admin manually
 app.post('/api/world/refresh', auth, async (req, res) => {
   try {

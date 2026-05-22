@@ -1,6 +1,8 @@
+console.log("ADMIN_PASSWORD =", process.env.ADMIN_PASSWORD);
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+
 
 dotenv.config();
 
