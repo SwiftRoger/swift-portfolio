@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext.jsx';
 import Landing from './pages/Landing';
 import Bio from './pages/Bio';
 import Art from './pages/Art';
