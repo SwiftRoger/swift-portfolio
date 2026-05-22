@@ -680,6 +680,7 @@ app.put('/api/auth/profile', auth, async (req, res) => {
     const userId = req.user.userId
     const { bio, birth_city, age, power_level } = req.body
     await sql`UPDATE users SET bio = COALESCE(${bio}, bio), birth_city = COALESCE(${birth_city}, birth_city), age = COALESCE(${age}, age), power_level = COALESCE(${power_level}, power_level), updated_at = NOW() WHERE id = ${userId}`
+    await sql`UPDATE characters SET backstory = COALESCE(${bio}, backstory), birth_city = COALESCE(${birth_city}, birth_city), role = COALESCE(${power_level}, role), updated_at = NOW() WHERE user_id = ${userId}`
     const result = await sql`SELECT id, username, email, bio, birth_city, age, power_level, avatar_url, avatar_approved, created_at FROM users WHERE id = ${userId}`
     res.json({ user: result[0] })
   } catch (error) {
