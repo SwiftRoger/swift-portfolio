@@ -99,6 +99,11 @@ export default function Admin() {
 const [editingEvent, setEditingEvent] = useState(null)
 
   useEffect(() => {
+    // Local `npm run dev` only — never active on Vercel production build
+    if (import.meta.env.DEV) {
+      setUnlocked(true)
+      return
+    }
     const token = localStorage.getItem('portfolio_token')
     if (token) { setAuthToken(token); setUnlocked(true); fetchAll() }
   }, [])
@@ -256,8 +261,12 @@ const [editingEvent, setEditingEvent] = useState(null)
   // ── WORLD ──
   const handleWorldRefresh = async () => {
     setRefreshing(true)
-    try { const res = await api.post('/api/world/refresh', {}); setWorldEvents(res.data.events || []); showSuccess('World updated with AI events!') }
-    catch (err) { console.error(err); showSuccess('Groq refresh failed — check API key') }
+    try {
+      const res = await api.post('/api/world/refresh', {})
+      setWorldEvents(res.data.events || [])
+      showSuccess(`Today's broadcast: ${res.data.count ?? 3} lines published`)
+    }
+    catch (err) { console.error(err); showSuccess('Broadcast failed — check GROQ_API_KEY') }
     finally { setRefreshing(false) }
   }
 
@@ -349,6 +358,7 @@ const handleDeleteEvent = async (id) => {
       <header style={s.header}>
         <h1 style={s.logo}>// ADMIN PANEL</h1>
         <div style={s.headerRight}>
+          {import.meta.env.DEV && <p style={s.hint}>LOCAL DEV — login skipped</p>}
           {success && <p style={s.success}>{success}</p>}
           <button style={s.logoutBtn} onClick={() => { setAuthToken(null); setUnlocked(false) }}>LOGOUT</button>
           <a href='/' style={s.backBtn}>← BACK TO SITE</a>
@@ -559,10 +569,10 @@ const handleDeleteEvent = async (id) => {
 
     {/* AI Refresh */}
     <div style={{ background: '#0a0a12', border: '1px solid #1a1a2e', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <p style={{ ...s.label, color: '#4fc3f7' }}>// AI EVENT GENERATOR (GROQ)</p>
-      <p style={s.hint}>Fetches real-world news and rewrites it as lore events in the Land of Three.</p>
+      <p style={{ ...s.label, color: '#4fc3f7' }}>// DAILY AI BROADCAST (GROQ)</p>
+      <p style={s.hint}>Deletes old AI news, posts 3 new bulletins from your manual canon + today&apos;s date (2070) / season / weather. Auto-runs UTC midnight.</p>
       <button style={{ ...s.primaryBtn, opacity: refreshing ? 0.6 : 1, background: refreshing ? '#333' : '#4fc3f7' }} onClick={handleWorldRefresh} disabled={refreshing}>
-        {refreshing ? 'GENERATING...' : '⚡ REFRESH WORLD NOW'}
+        {refreshing ? 'BROADCASTING...' : '⚡ RUN TODAY\'S BROADCAST'}
       </button>
     </div>
 

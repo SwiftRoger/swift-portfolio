@@ -303,54 +303,114 @@ app.delete('/api/world/events/:id', auth, async (req, res) => {
 
 
 
-// Groq AI trigger — called by cron or admin manually
-app.post('/api/world/refresh', auth, async (req, res) => {
+// ── DAILY AI BROADCAST (3 ephemeral news lines) ───
+const cronAuth = (req, res, next) => {
+  const secret = process.env.CRON_SECRET
+  if (!secret) return res.status(501).json({ message: 'CRON_SECRET not set on server' })
+  if (req.headers.authorization !== `Bearer ${secret}`) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+  next()
+}
+
+async function runDailyBroadcast() {
+  const now = new Date()
+  const utcMonth = now.getUTCMonth()
+  const season =
+    utcMonth >= 2 && utcMonth <= 4 ? 'spring'
+      : utcMonth >= 5 && utcMonth <= 7 ? 'summer'
+        : utcMonth >= 8 && utcMonth <= 10 ? 'autumn'
+          : 'winter'
+
+  const worldDate = now.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }) + ', 2070'
+  const worldTime = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'UTC',
+  }) + ' UTC'
+
+  const manualRows = await sql`
+    SELECT headline, summary, location_name
+    FROM portfolio_world_events
+    WHERE source_type = 'manual'
+    ORDER BY created_at DESC
+    LIMIT 10`
+
+  const canonBlock = manualRows.length
+    ? manualRows.map((e, i) => `${i + 1}. ${e.headline}${e.summary ? ` — ${e.summary}` : ''}`).join('\n')
+    : 'No manual canon yet. Keep broadcasts atmospheric only — weather, travel, trade, mood. No major wars or plagues unless implied by season.'
+
+  const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-8b-instant',
+      max_tokens: 900,
+      messages: [{
+        role: 'system',
+        content: `You are a news broadcaster for "The Land of Three" (dark fantasy).
+Write today's bulletin — NOT new canon. React to admin canon facts when provided.
+Pick ONE weather mood for the whole day (sunny, cloudy, windy, rainy, or snowy) that fits the season. All 3 lines share it.
+Return ONLY a JSON array of exactly 3 objects:
+{ "headline", "summary", "location_name", "x_percent", "y_percent" }
+headline = short ticker. summary = 1–2 sentences, news-desk tone.
+Map coords: Ashen North y 10–35, Verdant Middle y 36–65, Sunken South y 66–90, x 10–90.
+Do not contradict manual canon. Do not invent huge new plot. Flow naturally.`,
+      }, {
+        role: 'user',
+        content: `Broadcast date: ${worldDate}
+Broadcast time: ${worldTime}
+Season: ${season}
+
+Manual canon (source of truth):
+${canonBlock}
+
+Write exactly 3 breaking broadcast lines for right now.`,
+      }],
+    }),
+  })
+
+  const groqData = await groqRes.json()
+  const text = groqData.choices?.[0]?.message?.content || '[]'
+  const clean = text.replace(/```json|```/g, '').trim()
+  let events = JSON.parse(clean)
+  if (!Array.isArray(events)) events = []
+  events = events.slice(0, 3)
+
+  await sql`DELETE FROM portfolio_world_events WHERE source_type = 'ai'`
+
+  for (const ev of events) {
+    await sql`
+      INSERT INTO portfolio_world_events (headline, summary, location_name, x_percent, y_percent, source_type)
+      VALUES (${ev.headline}, ${ev.summary}, ${ev.location_name}, ${ev.x_percent}, ${ev.y_percent}, 'ai')`
+  }
+
+  const rows = await sql`SELECT * FROM portfolio_world_events ORDER BY created_at DESC LIMIT 20`
+  return { message: 'Daily broadcast published', count: events.length, broadcast_day: worldDate, events: rows }
+}
+
+const handleBroadcast = async (req, res) => {
   try {
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        max_tokens: 1000,
-        messages: [{
-          role: 'system',
-          content: `You are a lore keeper for "The Land of Three", a dark fantasy world. 
-          Real-world events are reinterpreted as events in this fictional world.
-          The three realms are: The Ashen North (cold, industrial, war), The Verdant Middle (fertile, political intrigue), The Sunken South (oceanic, mysterious, ancient).
-          Return ONLY a JSON array of 5 events. Each event: { headline, summary, location_name, x_percent, y_percent }
-          x_percent and y_percent are 0-100 coordinates on a world map.
-          Ashen North: y 10-35. Verdant Middle: y 36-65. Sunken South: y 66-90. x varies 10-90.
-          Make the events dramatic and lore-appropriate, inspired by real current world tensions.`
-        }, {
-          role: 'user',
-          content: `Generate 5 world events happening right now in The Land of Three. Today is ${new Date().toDateString()}. Make them feel alive and urgent.`
-        }]
-      })
-    })
-
-    const groqData = await groqRes.json()
-    const text = groqData.choices?.[0]?.message?.content || '[]'
-    const clean = text.replace(/```json|```/g, '').trim()
-    const events = JSON.parse(clean)
-
-    // Clear old events and insert new ones
-    await sql`DELETE FROM portfolio_world_events WHERE source_type='ai'`
-
-    for (const ev of events) {
-      await sql`
-        INSERT INTO portfolio_world_events (headline, summary, location_name, x_percent, y_percent, source_type)
-        VALUES (${ev.headline}, ${ev.summary}, ${ev.location_name}, ${ev.x_percent}, ${ev.y_percent}, 'ai')`
-    }
-
-    const rows = await sql`SELECT * FROM portfolio_world_events ORDER BY created_at DESC LIMIT 20`
-    res.json({ message: 'World updated', events: rows })
+    const result = await runDailyBroadcast()
+    res.json(result)
   } catch (err) {
     console.error(err)
-    res.status(500).json({ message: 'Groq refresh failed', error: err.message })
+    res.status(500).json({ message: 'Daily broadcast failed', error: err.message })
   }
-})
+}
+
+// UTC midnight cron (set CRON_SECRET in Vercel env)
+app.get('/api/cron/world-broadcast', cronAuth, handleBroadcast)
+
+// Admin test button (same logic as cron)
+app.post('/api/world/refresh', auth, handleBroadcast)
 
 export default app

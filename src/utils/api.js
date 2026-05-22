@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+// Local dev: empty baseURL uses Vite proxy (/api → localhost:3001).
+// Production: set VITE_API_URL on Vercel (often empty — same origin).
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
+  baseURL: import.meta.env.VITE_API_URL || '',
 })
 
 export const setAuthToken = (token) => {
