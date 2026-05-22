@@ -324,10 +324,12 @@ export default function Index({ onBack }) {
 
               <div style={{ width: '32px', height: '1px', background: 'rgba(192,176,255,0.2)', marginBottom: '1.5rem' }} />
 
+               {selected.backstory && <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.95rem', color: 'rgba(232,224,248,0.6)', lineHeight: 2, fontWeight: 300, marginBottom: '1.5rem' }}>{selected.backstory}</p>}
                {selected.lore && <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.95rem', color: 'rgba(232,224,248,0.6)', lineHeight: 2, fontWeight: 300, marginBottom: '1.5rem' }}>{selected.lore}</p>}
                {selected.daily_activity && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.75rem', color: 'rgba(192,176,255,0.4)', letterSpacing: '0.1em', marginBottom: '1.5rem', fontStyle: 'italic' }}>{selected.daily_activity}</p>}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+               {selected.birth_city && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.6rem', color: 'rgba(192,176,255,0.3)', letterSpacing: '0.15em' }}>ORIGIN // {selected.birth_city}</p>}
                 {selected.story_ref && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.6rem', color: 'rgba(192,176,255,0.3)', letterSpacing: '0.15em' }}>STORY // {selected.story_ref}</p>}
                 {selected.first_appearance && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.6rem', color: 'rgba(192,176,255,0.3)', letterSpacing: '0.15em' }}>FIRST SEEN // {selected.first_appearance}</p>}
               </div>
