@@ -201,16 +201,21 @@ function CharacterCard({ char, onClick }) {
         {char.type === 'original' ? 'OC' : 'CM'}
       </div>
 
-      {/* Name — slides up on hover */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '1rem 0.75rem',
-        transform: hovered ? 'translateY(0)' : 'translateY(4px)',
-        transition: 'transform 0.3s',
-      }}>
-        <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.9rem', color: '#e8e0f0', fontWeight: 300, marginBottom: '0.2rem' }}>{char.name}</p>
-        <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(192,176,255,0.5)', letterSpacing: '0.15em', opacity: hovered ? 1 : 0, transition: 'opacity 0.3s' }}>{char.role}</p>
-      </div>
+       {/* Name — slides up on hover */}
+       <div style={{
+         position: 'absolute', bottom: 0, left: 0, right: 0,
+         padding: '1rem 0.75rem',
+         transform: hovered ? 'translateY(0)' : 'translateY(4px)',
+         transition: 'transform 0.3s',
+       }}>
+         <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.9rem', color: '#e8e0f0', fontWeight: 300, marginBottom: '0.2rem' }}>{char.name}</p>
+         <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(192,176,255,0.5)', letterSpacing: '0.15em', opacity: hovered ? 1 : 0, transition: 'opacity 0.3s' }}>{char.role}</p>
+         {char.daily_activity && (
+           <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.45rem', color: 'rgba(192,176,255,0.3)', letterSpacing: '0.1em', fontStyle: 'italic', marginTop: '0.3rem' }}>
+             {char.daily_activity}
+           </p>
+         )}
+       </div>
     </div>
   )
 }
@@ -319,7 +324,8 @@ export default function Index({ onBack }) {
 
               <div style={{ width: '32px', height: '1px', background: 'rgba(192,176,255,0.2)', marginBottom: '1.5rem' }} />
 
-              {selected.lore && <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.95rem', color: 'rgba(232,224,248,0.6)', lineHeight: 2, fontWeight: 300, marginBottom: '1.5rem' }}>{selected.lore}</p>}
+               {selected.lore && <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.95rem', color: 'rgba(232,224,248,0.6)', lineHeight: 2, fontWeight: 300, marginBottom: '1.5rem' }}>{selected.lore}</p>}
+               {selected.daily_activity && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.75rem', color: 'rgba(192,176,255,0.4)', letterSpacing: '0.1em', marginBottom: '1.5rem', fontStyle: 'italic' }}>{selected.daily_activity}</p>}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {selected.story_ref && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.6rem', color: 'rgba(192,176,255,0.3)', letterSpacing: '0.15em' }}>STORY // {selected.story_ref}</p>}

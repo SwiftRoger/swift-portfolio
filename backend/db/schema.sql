@@ -1,11 +1,35 @@
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS characters (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    birth_city VARCHAR(100),
+    backstory TEXT,
+    image_url TEXT,
+    role VARCHAR(100) DEFAULT 'Adventurer',
+    lore TEXT,
+    daily_activity TEXT,
+    is_nsfw BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS portfolio_bio (
-  id SERIAL PRIMARY KEY,
-  name VARCHAR(100) DEFAULT 'Swift Caulfield',
-  role VARCHAR(100) DEFAULT 'Artist / Illustrator',
-  bio_text TEXT DEFAULT '',
-  tags TEXT DEFAULT '',
-  pfp_url TEXT DEFAULT '',
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) DEFAULT 'Swift Caulfield',
+    role VARCHAR(100) DEFAULT 'Artist / Illustrator',
+    bio_text TEXT DEFAULT '',
+    tags TEXT DEFAULT '',
+    pfp_url TEXT DEFAULT '',
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS portfolio_art (

@@ -20,12 +20,14 @@ const artRoutes = require('./routes/art');
 const videoRoutes = require('./routes/videos');
 const designRoutes = require('./routes/design');
 const authRoutes = require('./routes/auth');
+const characterRoutes = require('./routes/characters');
 
 app.use('/api/bio', bioRoutes);
 app.use('/api/art', artRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/design', designRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/characters', characterRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Swift Portfolio API 🖤' });

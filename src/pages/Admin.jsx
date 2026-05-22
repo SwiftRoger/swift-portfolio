@@ -332,21 +332,48 @@ const [editingEvent, setEditingEvent] = useState(null)
   }
 }
 
-const handleDeleteEvent = async (id) => {
-  try {
-    await api.delete(`/api/world/events/${id}`)
+   const handleDeleteEvent = async (id) => {
+   try {
+     await api.delete(`/api/world/events/${id}`);
 
-    setWorldEvents(prev =>
-      prev.filter(event => event.id !== id)
-    )
+     setWorldEvents(prev =>
+       prev.filter(event => event.id !== id)
+     );
 
-    showSuccess('Deleted!')
-  } catch (err) {
-    console.error(err)
-  }
-}
+     showSuccess('Deleted!');
+   } catch (err) {
+     console.error(err);
+   }
+ };
 
-  const handleAddLocation = async () => {
+ const handleToggleNSFW = async (id, is_nsfw) => {
+   try {
+     // Check if user is admin
+     const token = localStorage.getItem('portfolio_token');
+     if (!token) {
+       showSuccess('Please log in as admin');
+       return;
+     }
+     
+     // Verify token and check admin status (simplified - in a real app you'd decode the token)
+     // For now, we'll rely on the backend to check admin privileges
+     const res = await api.put(`/api/characters/admin/${id}/toggle-nsfw`, { is_nsfw });
+     
+     // Update local state
+     setCharacters(prev =>
+       prev.map(char => 
+         char.id === id ? {...char, is_nsfw: res.data.is_nsfw} : char
+       )
+     );
+     
+     showSuccess(`Character marked as ${res.data.is_nsfw ? 'NSFW' : 'SFW'}`);
+   } catch (err) {
+     console.error('Toggle NSFW error:', err);
+     showSuccess('Failed to update character status');
+   }
+ };
+
+   const handleAddLocation = async () => {
     if (!locForm.name) return
     try { const res = await api.post('/api/world/locations', locForm); setWorldLocations(p => [...p, res.data]); setLocForm({ name: '', description: '', x_percent: 50, y_percent: 50, type: 'city' }); showSuccess('Location added!') }
     catch (err) { console.error(err) }
@@ -572,10 +599,23 @@ const handleDeleteEvent = async (id) => {
                         <label style={{ ...s.label, fontSize: '0.55rem' }}>UPLOAD IMAGE</label>
                         <input type='file' accept='image/*' onChange={e => handleCharImage(char.id, e)} style={{ ...s.fileInput, fontSize: '0.6rem' }} />
                       </div>
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
-                        <button style={{ ...s.secondaryBtn, padding: '0.2rem 0.5rem', fontSize: '0.6rem' }} onClick={() => { setEditingChar(char); setCharForm({ name: char.name, role: char.role, lore: char.lore, type: char.type, story_ref: char.story_ref, first_appearance: char.first_appearance }) }}>EDIT</button>
-                        <button style={{ ...s.deleteBtn, fontSize: '0.6rem' }} onClick={() => handleDeleteChar(char.id)}>DEL</button>
-                      </div>
+                       <div style={{ display: 'flex', gap: '0.4rem' }}>
+                         <button style={{ ...s.secondaryBtn, padding: '0.2rem 0.5rem', fontSize: '0.6rem' }} onClick={() => { setEditingChar(char); setCharForm({ name: char.name, role: char.role, lore: char.lore, type: char.type, story_ref: char.story_ref, first_appearance: char.first_appearance }) }}>EDIT</button>
+                         <button style={{ ...s.deleteBtn, fontSize: '0.6rem' }} onClick={() => handleDeleteChar(char.id)}>DEL</button>
+                         {char.is_nsfw !== undefined && (
+                           <button style={{ 
+                             background: char.is_nsfw ? 'rgba(255,68,68,0.2)' : 'rgba(68,255,136,0.2)', 
+                             border: `1px solid ${char.is_nsfw ? 'rgba(255,68,68,0.5)' : 'rgba(68,255,136,0.5)'}`, 
+                             color: char.is_nsfw ? '#ff4444' : '#44ff88',
+                             fontSize: '0.6rem',
+                             padding: '0.2rem 0.5rem',
+                             borderRadius: '4px',
+                             cursor: 'pointer'
+                           }} onClick={() => handleToggleNSFW(char.id, !char.is_nsfw)}>
+                             {char.is_nsfw ? 'NSFW' : 'SFW'}
+                           </button>
+                         )}
+                       </div>
                     </div>
                   </div>
                 ))}
