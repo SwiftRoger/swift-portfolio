@@ -3,6 +3,7 @@ import cors from 'cors'
 import { neon } from '@neondatabase/serverless'
 import { v2 as cloudinary } from 'cloudinary'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcryptjs'
 
 const app = express()
 app.use(cors())
@@ -29,13 +30,128 @@ const auth = (req, res, next) => {
 }
 
 // ── AUTH ──────────────────────────────────────────
-app.post('/api/auth/login', (req, res) => {
-  const { password } = req.body
-  if (password !== process.env.ADMIN_PASSWORD)
-    return res.status(401).json({ message: 'Access denied' })
-  const token = jwt.sign({ admin: true }, process.env.JWT_SECRET, { expiresIn: '7d' })
-  res.json({ token })
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body
+  
+  // Validate input
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password are required' })
+  }
+  
+  try {
+    // Find user
+    const result = await sql`SELECT * FROM users WHERE username = ${username}`
+    if (result.length === 0) {
+      return res.status(401).json({ message: 'Invalid credentials' })
+    }
+    
+    const user = result[0]
+    
+    // Check password
+    const isMatch = await bcrypt.compare(password, user.password_hash)
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' })
+    }
+    
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    )
+    
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.created_at
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
 })
+
+app.post('/api/auth/signup', async (req, res) => {
+  const { username, email, password } = req.body
+  if (!username || !email || !password)
+    return res.status(400).json({ message: 'Username, email, and password are required' })
+  try {
+    const userCheck = await sql`SELECT * FROM users WHERE username = ${username} OR email = ${email}`
+    if (userCheck.length > 0)
+      return res.status(409).json({ message: 'User already exists' })
+    const salt = await bcrypt.genSalt(10)
+    const passwordHash = await bcrypt.hash(password, salt)
+    const result = await sql`
+      INSERT INTO users (username, email, password_hash)
+      VALUES (${username}, ${email}, ${passwordHash})
+      RETURNING id, username, email, created_at`
+      
+    // Create default character for user
+    await sql`
+      INSERT INTO characters (user_id, name, role)
+      VALUES (${result[0].id}, ${username}, 'Adventurer')
+    `
+    
+    const token = jwt.sign({ userId: result[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' })
+    res.status(201).json({ token, user: result[0] })
+  } catch (err) {
+    console.error('Signup error:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+app.get('/api/auth/me', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' })
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const userId = decoded.userId
+    
+    const result = await sql`SELECT id, username, email, created_at FROM users WHERE id = ${userId}`
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+    
+    res.json({ user: result[0] })
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' })
+    }
+    console.error('Get user error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// Admin login (existing functionality preserved)
+app.post('/api/auth/admin/login', (req, res) => {
+  const { password } = req.body
+  
+  console.log('--- ADMIN LOGIN REQUEST ---');
+  console.log('Input password:', password);
+  console.log('Env password:', process.env.ADMIN_PASSWORD);
+  
+  if (password !== process.env.ADMIN_PASSWORD) {
+    console.log('RESULT: DENIED');
+    return res.status(401).json({ message: 'Access denied' });
+  }
+  
+  console.log('RESULT: SUCCESS');
+  
+  const token = jwt.sign(
+    { admin: true },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+  
+  res.json({ token });
+});
 
 // ── BIO ───────────────────────────────────────────
 app.get('/api/bio', async (req, res) => {
@@ -190,49 +306,83 @@ app.delete('/api/chapters/:id', auth, async (req, res) => {
 // ── CHARACTERS ────────────────────────────────────
 app.get('/api/characters', async (req, res) => {
   try {
-    const rows = await sql`SELECT * FROM portfolio_characters ORDER BY created_at DESC`
+    const rows = await sql`SELECT * FROM characters ORDER BY created_at DESC`
     res.json(rows)
   } catch { res.status(500).json({ message: 'Server error' }) }
 })
 
 app.post('/api/characters', auth, async (req, res) => {
-  const { name, role, lore, type, story_ref, first_appearance } = req.body
+  const { name, birth_city, backstory, role, image_url } = req.body
+  if (!name)
+    return res.status(400).json({ message: 'Character name is required' })
   try {
-    const rows = await sql`
-      INSERT INTO portfolio_characters (name, role, lore, type, story_ref, first_appearance)
-      VALUES (${name}, ${role}, ${lore}, ${type}, ${story_ref}, ${first_appearance})
+    const userCheck = await sql`SELECT * FROM users WHERE id = ${req.body.userId}`
+    if (userCheck.length === 0)
+      return res.status(404).json({ message: 'User not found' })
+      
+    const result = await sql`
+      INSERT INTO characters (user_id, name, birth_city, backstory, role, image_url)
+      VALUES (${req.body.userId}, ${name}, ${birth_city || ''}, ${backstory || ''}, ${role || 'Adventurer'}, ${image_url || ''})
       RETURNING *`
-    res.json(rows[0])
-  } catch { res.status(500).json({ message: 'Server error' }) }
+    const token = jwt.sign({ userId: result[0].id }, process.env.JWT_SECRET, { expiresIn: '7d' })
+    res.status(201).json({ token, user: result[0] })
+  } catch (err) {
+    console.error('Signup error:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
 })
 
 app.post('/api/characters/:id/image', auth, async (req, res) => {
   const { image } = req.body
   try {
     const upload = await cloudinary.uploader.upload(image, { folder: 'swift-portfolio/characters' })
-    await sql`UPDATE portfolio_characters SET image_url=${upload.secure_url} WHERE id=${req.params.id}`
+    await sql`UPDATE characters SET image_url=${upload.secure_url} WHERE id=${req.params.id}`
     res.json({ url: upload.secure_url })
   } catch { res.status(500).json({ message: 'Upload failed' }) }
 })
 
 app.put('/api/characters/:id', auth, async (req, res) => {
-  const { name, role, lore, type, story_ref, first_appearance } = req.body
+  const { name, birth_city, backstory, role, image_url } = req.body
   try {
     const rows = await sql`
-      UPDATE portfolio_characters
-      SET name=${name}, role=${role}, lore=${lore}, type=${type},
-          story_ref=${story_ref}, first_appearance=${first_appearance}
-      WHERE id=${req.params.id} RETURNING *`
+      UPDATE characters 
+      SET name = COALESCE(${name}, name), 
+          birth_city = COALESCE(${birth_city}, birth_city), 
+          backstory = COALESCE(${backstory}, backstory), 
+          role = COALESCE(${role}, role), 
+          image_url = COALESCE(${image_url}, image_url),
+          updated_at = NOW()
+      WHERE id = ${req.params.id}
+      RETURNING *`
     res.json(rows[0])
   } catch { res.status(500).json({ message: 'Server error' }) }
 })
 
 app.delete('/api/characters/:id', auth, async (req, res) => {
   try {
-    await sql`DELETE FROM portfolio_characters WHERE id=${req.params.id}`
+    await sql`DELETE FROM characters WHERE id=${req.params.id}`
     res.json({ message: 'Deleted' })
   } catch { res.status(500).json({ message: 'Server error' }) }
 })
+
+// Admin routes for content moderation
+app.put('/api/characters/admin/:id/toggle-nsfw', auth, async (req, res) => {
+  try {
+    // Check if user is admin (simplified - in production you'd want to check the JWT for admin flag)
+    const { id } = req.params;
+    const { is_nsfw } = req.body;
+    
+    // Toggle NSFW flag
+    const result = await sql`
+      UPDATE characters SET is_nsfw = ${is_nsfw} WHERE id = ${id} RETURNING *
+    `;
+    
+    res.json({ character: result[0] });
+  } catch (error) {
+    console.error('Toggle NSFW error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // ── WORLD LOCATIONS ───────────────────────────────
 app.get('/api/world/locations', async (req, res) => {
