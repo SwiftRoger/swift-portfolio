@@ -781,8 +781,61 @@ const [editingEvent, setEditingEvent] = useState(null)
   </div>
 )}
 
+        {/* ── AVATARS ── */}
+          {tab === 'avatars' && (
+            <AvatarsTab showSuccess={showSuccess} />
+          )}
+
         </main>
       </div>
+    </div>
+  )
+}
+
+function AvatarsTab({ showSuccess }) {
+  const [avatars, setAvatars] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get('/api/auth/admin/avatars/pending')
+      .then(res => setAvatars(res.data.avatars || []))
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handle = async (userId, approved) => {
+    try {
+      await api.put(`/api/auth/admin/avatar/${userId}/approve`, { approved })
+      setAvatars(p => p.filter(a => a.id !== userId))
+      showSuccess(approved ? 'Avatar approved!' : 'Avatar rejected!')
+    } catch (err) { console.error(err) }
+  }
+
+  const s2 = {
+    card: { background: '#0a0a12', border: '1px solid #1a1a2e', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' },
+    img: { width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover', border: '1px solid #1a1a2e' },
+    name: { fontFamily: 'monospace', fontSize: '0.85rem', color: '#e8e8e0' },
+    email: { fontFamily: 'monospace', fontSize: '0.7rem', color: '#888' },
+    approveBtn: { background: 'transparent', border: '1px solid #44ff88', color: '#44ff88', fontFamily: 'monospace', fontSize: '0.75rem', padding: '0.4rem 1rem', cursor: 'pointer' },
+    rejectBtn: { background: 'transparent', border: '1px solid #ff4444', color: '#ff4444', fontFamily: 'monospace', fontSize: '0.75rem', padding: '0.4rem 1rem', cursor: 'pointer' },
+  }
+
+  return (
+    <div style={{ maxWidth: '750px', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <h2 style={{ fontFamily: 'monospace', fontSize: '1.4rem', color: '#e8e8e0', letterSpacing: '0.1em' }}>PENDING AVATARS</h2>
+      {loading && <p style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888' }}>Loading...</p>}
+      {!loading && avatars.length === 0 && <p style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#444' }}>// No pending avatars.</p>}
+      {avatars.map(a => (
+        <div key={a.id} style={s2.card}>
+          <img src={a.avatar_url} alt={a.username} style={s2.img} />
+          <div style={{ flex: 1 }}>
+            <p style={s2.name}>{a.username}</p>
+            <p style={s2.email}>{a.email}</p>
+          </div>
+          <button style={s2.approveBtn} onClick={() => handle(a.id, true)}>APPROVE</button>
+          <button style={s2.rejectBtn} onClick={() => handle(a.id, false)}>REJECT</button>
+        </div>
+      ))}
     </div>
   )
 }
