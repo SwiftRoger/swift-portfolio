@@ -131,7 +131,10 @@ export default function Profile({ onBack }) {
         boxShadow: '0 0 30px rgba(0,0,0,0.5)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(200,184,154,0.5)', fontFamily: '"Space Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.3em', cursor: 'pointer', marginBottom: '1.5rem', display: 'block', margin: '0 auto 1.5rem' }}>← BACK</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(200,184,154,0.5)', fontFamily: '"Space Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.3em', cursor: 'pointer' }}>← BACK</button>
+            <button onClick={() => { localStorage.removeItem('portfolio_token'); window.location.href = '/' }} style={{ background: 'none', border: '1px solid rgba(255,100,100,0.3)', color: 'rgba(255,100,100,0.5)', fontFamily: '"Space Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.3em', cursor: 'pointer', padding: '0.3rem 0.8rem' }}>LOGOUT</button>
+          </div>
           <h1 style={{
             color: '#e8e0d0',
             fontFamily: '"Cormorant Garamond", serif',

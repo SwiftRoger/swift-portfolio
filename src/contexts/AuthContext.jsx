@@ -68,10 +68,15 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const updateUser = (updates) => {
-    setUser(prev => ({ ...prev, ...updates }));
+  const updateUser = async (updates) => {
+    try {
+      const response = await api.put('/api/auth/profile', updates);
+      setUser(response.data.user);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.message || 'Update failed' };
+    }
   };
-
   const value = {
     user,
     loading,

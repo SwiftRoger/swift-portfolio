@@ -705,8 +705,7 @@ app.post('/api/auth/avatar', auth, async (req, res) => {
 // ── ADMIN AVATAR APPROVAL ─────────────────────────────
 app.put('/api/auth/admin/avatar/:userId/approve', auth, async (req, res) => {
   try {
-    const adminCheck = await sql`SELECT admin FROM users WHERE id = ${req.user.userId}`
-    if (!adminCheck[0]?.admin) return res.status(403).json({ message: 'Admin access required' })
+    if (!req.user.admin) return res.status(403).json({ message: 'Admin access required' })
     const { approved } = req.body
     await sql`UPDATE users SET avatar_approved = ${approved}, updated_at = NOW() WHERE id = ${req.params.userId}`
     res.json({ message: `Avatar ${approved ? 'approved' : 'rejected'}` })
@@ -719,8 +718,7 @@ app.put('/api/auth/admin/avatar/:userId/approve', auth, async (req, res) => {
 // ── PENDING AVATARS ───────────────────────────────────
 app.get('/api/auth/admin/avatars/pending', auth, async (req, res) => {
   try {
-    const adminCheck = await sql`SELECT admin FROM users WHERE id = ${req.user.userId}`
-    if (!adminCheck[0]?.admin) return res.status(403).json({ message: 'Admin access required' })
+    if (!req.user.admin) return res.status(403).json({ message: 'Admin access required' })
     const result = await sql`SELECT id, username, email, avatar_url, created_at FROM users WHERE avatar_url IS NOT NULL AND avatar_approved IS NOT TRUE ORDER BY created_at ASC`
     res.json({ avatars: result })
   } catch (error) {
