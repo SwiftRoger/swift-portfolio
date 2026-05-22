@@ -152,7 +152,7 @@ const [editingEvent, setEditingEvent] = useState(null)
 
   const handleLogin = async () => {
     try {
-      const res = await api.post('/api/auth/login', { password: passwordInput })
+      const res = await api.post('/api/auth/admin/login', { password: passwordInput })
       setAuthToken(res.data.token)
       setUnlocked(true)
       fetchAll()
