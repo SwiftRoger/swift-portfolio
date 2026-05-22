@@ -672,4 +672,64 @@ app.get('/api/cron/world-broadcast', cronAuth, handleBroadcast)
 // Admin test button (same logic as cron)
 app.post('/api/world/refresh', auth, handleBroadcast)
 
+
+
+// ── USER PROFILE ─────────────────────────────────────
+app.put('/api/auth/profile', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId
+    const { bio, birth_city, age, power_level } = req.body
+    await sql`UPDATE users SET bio = COALESCE(${bio}, bio), birth_city = COALESCE(${birth_city}, birth_city), age = COALESCE(${age}, age), power_level = COALESCE(${power_level}, power_level), updated_at = NOW() WHERE id = ${userId}`
+    const result = await sql`SELECT id, username, email, bio, birth_city, age, power_level, avatar_url, avatar_approved, created_at FROM users WHERE id = ${userId}`
+    res.json({ user: result[0] })
+  } catch (error) {
+    console.error('Update profile error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// ── AVATAR UPLOAD ─────────────────────────────────────
+app.post('/api/auth/avatar', auth, async (req, res) => {
+  const { image } = req.body
+  if (!image) return res.status(400).json({ message: 'No image provided' })
+  try {
+    const upload = await cloudinary.uploader.upload(image, { folder: 'swift-portfolio/avatars', transformation: [{ width: 400, height: 400, crop: 'limit' }] })
+    await sql`UPDATE users SET avatar_url = ${upload.secure_url}, avatar_approved = FALSE, updated_at = NOW() WHERE id = ${req.user.userId}`
+    res.json({ url: upload.secure_url, message: 'Avatar uploaded. Awaiting admin approval.' })
+  } catch (err) {
+    console.error('Avatar upload error:', err)
+    res.status(500).json({ message: 'Upload failed' })
+  }
+})
+
+// ── ADMIN AVATAR APPROVAL ─────────────────────────────
+app.put('/api/auth/admin/avatar/:userId/approve', auth, async (req, res) => {
+  try {
+    const adminCheck = await sql`SELECT admin FROM users WHERE id = ${req.user.userId}`
+    if (!adminCheck[0]?.admin) return res.status(403).json({ message: 'Admin access required' })
+    const { approved } = req.body
+    await sql`UPDATE users SET avatar_approved = ${approved}, updated_at = NOW() WHERE id = ${req.params.userId}`
+    res.json({ message: `Avatar ${approved ? 'approved' : 'rejected'}` })
+  } catch (error) {
+    console.error('Avatar approval error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+// ── PENDING AVATARS ───────────────────────────────────
+app.get('/api/auth/admin/avatars/pending', auth, async (req, res) => {
+  try {
+    const adminCheck = await sql`SELECT admin FROM users WHERE id = ${req.user.userId}`
+    if (!adminCheck[0]?.admin) return res.status(403).json({ message: 'Admin access required' })
+    const result = await sql`SELECT id, username, email, avatar_url, created_at FROM users WHERE avatar_url IS NOT NULL AND avatar_approved IS NOT TRUE ORDER BY created_at ASC`
+    res.json({ avatars: result })
+  } catch (error) {
+    console.error('Get pending avatars error:', error)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+
+
+
 export default app
