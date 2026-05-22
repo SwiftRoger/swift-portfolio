@@ -114,7 +114,7 @@ app.get('/api/auth/me', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     const userId = decoded.userId
     
-    const result = await sql`SELECT id, username, email, created_at FROM users WHERE id = ${userId}`
+    const result = await sql`SELECT id, username, email, bio, birth_city, age, power_level, avatar_url, avatar_approved, created_at FROM users WHERE id = ${userId}`
     if (result.length === 0) {
       return res.status(404).json({ message: 'User not found' })
     }
