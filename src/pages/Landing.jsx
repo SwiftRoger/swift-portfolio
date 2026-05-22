@@ -518,7 +518,7 @@ export default function Landing({ onEnter }) {
         {/* 4 Icon buttons */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', animation: ready ? 'iconRise 0.7s ease 0.65s both' : 'none' }}>
           {ICONS.map((item) => (
-            <div key={item.id} className="icon-btn" onClick={() => setTunneling(item.id)}>
+            <div key={item.id} className="icon-btn" onClick={() => setTunneling(item.id === 'auth' && user ? 'profile' : item.id)}>
               <div className="icon-ring">{item.svg}</div>
               <p className="icon-label">{item.label}</p>
             </div>
