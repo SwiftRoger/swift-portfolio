@@ -10,6 +10,7 @@ export default function Profile({ onBack }) {
     age: '',
     power_level: ''
   });
+  const [avatarApproved, setAvatarApproved] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -28,6 +29,7 @@ export default function Profile({ onBack }) {
         power_level: user.power_level || 'None'
       });
       setAvatarUrl(user.avatar_url || '');
+      setAvatarApproved(user.avatar_approved || false);
     }
   }, [user]);
 
@@ -160,29 +162,18 @@ export default function Profile({ onBack }) {
               margin: '0 auto 1rem',
               borderRadius: '50%',
               overflow: 'hidden',
-              border: `2px solid ${user.avatar_approved ? '#4fc3f7' : '#ff6b6b'}`,
-              boxShadow: user.avatar_approved 
-                ? '0 0 20px rgba(79,195,247,0.3)' 
+              border: `2px solid ${avatarApproved ? '#4fc3f7' : '#ff6b6b'}`,
+              boxShadow: avatarApproved
+                ? '0 0 20px rgba(79,195,247,0.3)'
                 : '0 0 20px rgba(255,107,107,0.3)'
             }}>
-              <img
-                src={avatarUrl}
-                alt="Avatar"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              {!user.avatar_approved && (
+              <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {!avatarApproved && (
                 <div style={{
-                  position: 'absolute',
-                  bottom: '0',
-                  left: '0',
-                  right: '0',
-                  background: 'rgba(0,0,0,0.7)',
-                  color: '#ff6b6b',
-                  padding: '0.5rem',
-                  fontSize: '0.8rem',
-                  textAlign: 'center',
-                  fontFamily: '"Space Mono", monospace',
-                  letterSpacing: '0.1em'
+                  position: 'absolute', bottom: '0', left: '0', right: '0',
+                  background: 'rgba(0,0,0,0.7)', color: '#ff6b6b',
+                  padding: '0.5rem', fontSize: '0.8rem', textAlign: 'center',
+                  fontFamily: '"Space Mono", monospace', letterSpacing: '0.1em'
                 }}>
                   Awaiting Approval
                 </div>
