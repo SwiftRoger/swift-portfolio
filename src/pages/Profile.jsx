@@ -329,12 +329,46 @@ export default function Profile({ onBack }) {
             >
               BIRTH CITY
             </label>
-            <input
-              type="text"
+            <select
               id="birth_city"
               name="birth_city"
               value={form.birth_city}
               onChange={handleChange}
+              style={{ width: '100%', padding: '0.75rem', background: 'rgba(6,5,10,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: '#e8e0d0', fontFamily: '"Space Mono", monospace', fontSize: '0.9rem', outline: 'none' }}
+            >
+              <option value="">— Select a city —</option>
+              <optgroup label="Valkenheim">
+                <option value="Frostgate">Frostgate</option>
+                <option value="Blackmere">Blackmere</option>
+                <option value="Valken Watch">Valken Watch</option>
+              </optgroup>
+              <optgroup label="Khardün Reach">
+                <option value="Harrowden">Harrowden</option>
+                <option value="Saltgrimm">Saltgrimm</option>
+                <option value="Cape Riven">Cape Riven</option>
+              </optgroup>
+              <optgroup label="High Aurelia">
+                <option value="Caer Sol">Caer Sol</option>
+                <option value="Northquiet">Northquiet</option>
+                <option value="Mirrordeep">Mirrordeep</option>
+              </optgroup>
+              <optgroup label="Sarendor">
+                <option value="Lornhaven">Lornhaven</option>
+                <option value="Stoneveil">Stoneveil</option>
+                <option value="Coilport">Coilport</option>
+                <option value="Sunscar Citadel">Sunscar Citadel</option>
+              </optgroup>
+              <optgroup label="Meridian Spire">
+                <option value="Echogate">Echogate</option>
+                <option value="Spirecourt">Spirecourt</option>
+                <option value="Greenfall">Greenfall</option>
+              </optgroup>
+              <optgroup label="Ossuan Depths">
+                <option value="Brinehollow">Brinehollow</option>
+                <option value="Dimreach">Dimreach</option>
+                <option value="Last Buoy">Last Buoy</option>
+              </optgroup>
+            </select>
               style={{
                 width: '100%',
                 padding: '0.75rem',

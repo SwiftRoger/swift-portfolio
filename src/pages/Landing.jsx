@@ -518,14 +518,30 @@ export default function Landing({ onEnter }) {
           })}
         </div>
 
+       {/* BEGIN YOUR JOURNEY — only for guests */}
+        {!user && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', animation: ready ? 'iconRise 0.7s ease 0.5s both' : 'none' }}>
+            <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', letterSpacing: '0.45em', color: 'rgba(200,184,154,0.4)', animation: 'breathe 3s ease infinite' }}>// BEGIN YOUR JOURNEY</p>
+            <div className="icon-btn" onClick={() => setTunneling('auth')} style={{ transform: 'scale(1.3)', marginBottom: '0.5rem' }}>
+              <div className="icon-ring" style={{ width: '88px', height: '88px', border: '1px solid rgba(200,180,255,0.25)', boxShadow: '0 0 30px rgba(160,130,255,0.12)', animation: 'rimPulse 3s ease infinite' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '28px', height: '28px', color: 'rgba(200,184,154,0.7)' }}><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              </div>
+              <p className="icon-label" style={{ fontSize: '0.5rem', color: 'rgba(200,184,154,0.5)', letterSpacing: '0.3em' }}>IDENTITY</p>
+            </div>
+          </div>
+        )}
+
         {/* 4 Icon buttons */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem', animation: ready ? 'iconRise 0.7s ease 0.65s both' : 'none' }}>
-          {ICONS.map((item) => (
-            <div key={item.id} className="icon-btn" onClick={() => setTunneling(item.id === 'auth' && user ? 'profile' : item.id)}>
-              <div className="icon-ring">{item.svg}</div>
-              <p className="icon-label">{item.label}</p>
-            </div>
-          ))}
+          {ICONS.map((item) => {
+            if (item.id === 'auth' && !user) return null
+            return (
+              <div key={item.id} className="icon-btn" onClick={() => setTunneling(item.id === 'auth' && user ? 'profile' : item.id)}>
+                <div className="icon-ring">{item.svg}</div>
+                <p className="icon-label">{item.label}</p>
+              </div>
+            )
+          })}
         </div>
 
       </div>
