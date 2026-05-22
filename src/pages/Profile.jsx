@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 
-export default function Profile() {
+export default function Profile({ onBack }) {
   const { user, loading, updateUser } = useAuth();
   const [form, setForm] = useState({
     bio: '',
@@ -131,6 +131,7 @@ export default function Profile() {
         boxShadow: '0 0 30px rgba(0,0,0,0.5)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(200,184,154,0.5)', fontFamily: '"Space Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.3em', cursor: 'pointer', marginBottom: '1.5rem', display: 'block', margin: '0 auto 1.5rem' }}>← BACK</button>
           <h1 style={{
             color: '#e8e0d0',
             fontFamily: '"Cormorant Garamond", serif',
