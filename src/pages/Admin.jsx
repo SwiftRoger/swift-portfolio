@@ -52,6 +52,7 @@ const TABS = [
   { id: 'story',   label: '05 — STORY' },
   { id: 'index',   label: '06 — INDEX' },
   { id: 'world',   label: '07 — WORLD' },
+  { id: 'avatars', label: '08 — AVATARS' },
 ]
 
 export default function Admin() {
