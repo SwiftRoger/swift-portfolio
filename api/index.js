@@ -673,6 +673,60 @@ app.get('/api/cron/world-broadcast', cronAuth, handleBroadcast)
 app.post('/api/world/refresh', auth, handleBroadcast)
 
 
+// ── WORLD MAPS ────────────────────────────────────────
+app.get('/api/world/maps', async (req, res) => {
+  try {
+    const rows = await sql`SELECT * FROM world_maps`
+    res.json(rows)
+  } catch { res.status(500).json({ message: 'Server error' }) }
+})
+
+app.post('/api/world/maps/:key', auth, async (req, res) => {
+  const { image } = req.body
+  try {
+    const upload = await cloudinary.uploader.upload(image, { folder: 'swift-portfolio/maps' })
+    await sql`UPDATE world_maps SET image_url = ${upload.secure_url}, updated_at = NOW() WHERE key = ${req.params.key}`
+    res.json({ url: upload.secure_url })
+  } catch { res.status(500).json({ message: 'Upload failed' }) }
+})
+
+// ── WORLD LOCATIONS EXTENDED ──────────────────────────
+app.put('/api/world/locations/:id', auth, async (req, res) => {
+  const { name, description, biography, x_percent, y_percent, type, image_url } = req.body
+  try {
+    const rows = await sql`
+      UPDATE portfolio_world_locations
+      SET name = COALESCE(${name}, name),
+          description = COALESCE(${description}, description),
+          biography = COALESCE(${biography}, biography),
+          x_percent = COALESCE(${x_percent}, x_percent),
+          y_percent = COALESCE(${y_percent}, y_percent),
+          type = COALESCE(${type}, type),
+          updated_at = NOW()
+      WHERE id = ${req.params.id} RETURNING *`
+    res.json(rows[0])
+  } catch { res.status(500).json({ message: 'Server error' }) }
+})
+
+app.post('/api/world/locations/:id/image', auth, async (req, res) => {
+  const { image } = req.body
+  try {
+    const upload = await cloudinary.uploader.upload(image, { folder: 'swift-portfolio/locations' })
+    await sql`UPDATE portfolio_world_locations SET image_url = ${upload.secure_url}, updated_at = NOW() WHERE id = ${req.params.id}`
+    res.json({ url: upload.secure_url })
+  } catch { res.status(500).json({ message: 'Upload failed' }) }
+})
+
+app.post('/api/world/events/:id/image', auth, async (req, res) => {
+  const { image } = req.body
+  try {
+    const upload = await cloudinary.uploader.upload(image, { folder: 'swift-portfolio/events' })
+    await sql`UPDATE portfolio_world_events SET image_url = ${upload.secure_url} WHERE id = ${req.params.id}`
+    res.json({ url: upload.secure_url })
+  } catch { res.status(500).json({ message: 'Upload failed' }) }
+})
+
+
 
 // ── USER PROFILE ─────────────────────────────────────
 app.put('/api/auth/profile', auth, async (req, res) => {
