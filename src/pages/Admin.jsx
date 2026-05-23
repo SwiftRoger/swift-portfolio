@@ -843,8 +843,9 @@ function AvatarsTab({ showSuccess }) {
       ))}
     </div>
   )
+}
 
-  function WorldMapsTab({ showSuccess }) {
+function WorldMapsTab({ showSuccess }) {
   const [maps, setMaps] = useState([])
   const [locations, setLocations] = useState([])
   const [editingLoc, setEditingLoc] = useState(null)
