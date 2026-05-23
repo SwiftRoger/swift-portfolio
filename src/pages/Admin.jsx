@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import api, { setAuthToken } from '../utils/api'
 import { getWorldClock } from '../utils/worldClock'
+import MapPinEditor from '../components/MapPinEditor'
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
 const s = {
@@ -848,8 +849,8 @@ function AvatarsTab({ showSuccess }) {
 function WorldMapsTab({ showSuccess }) {
   const [maps, setMaps] = useState([])
   const [locations, setLocations] = useState([])
-  const [editingLoc, setEditingLoc] = useState(null)
-  const [locForm, setLocForm] = useState({ name: '', description: '', biography: '', type: 'city', x_percent: 50, y_percent: 50 })
+  const [events, setEvents] = useState([])
+  const [selectedMap, setSelectedMap] = useState('world')
   const [loading, setLoading] = useState(true)
 
   const MAP_KEYS = [
@@ -866,9 +867,11 @@ function WorldMapsTab({ showSuccess }) {
     Promise.all([
       api.get('/api/world/maps'),
       api.get('/api/world/locations'),
-    ]).then(([mapsRes, locRes]) => {
+      api.get('/api/world/events'),
+    ]).then(([mapsRes, locRes, evRes]) => {
       setMaps(mapsRes.data || [])
       setLocations(locRes.data || [])
+      setEvents(evRes.data || [])
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
@@ -886,114 +889,58 @@ function WorldMapsTab({ showSuccess }) {
     reader.readAsDataURL(file)
   }
 
-  const handleLocImageUpload = async (id, e) => {
-    const file = e.target.files[0]; if (!file) return
-    const reader = new FileReader()
-    reader.onload = async () => {
-      try {
-        const res = await api.post(`/api/world/locations/${id}/image`, { image: reader.result })
-        setLocations(prev => prev.map(l => l.id === id ? { ...l, image_url: res.data.url } : l))
-        showSuccess('Location image uploaded!')
-      } catch (err) { console.error(err) }
-    }
-    reader.readAsDataURL(file)
+  const handlePinUpdate = (action, data) => {
+    if (action === 'location_add') setLocations(p => [...p, data])
+    if (action === 'location_update') setLocations(p => p.map(l => l.id === data.id ? data : l))
+    if (action === 'location_delete') setLocations(p => p.filter(l => l.id !== data.id))
+    if (action === 'location_move') setLocations(p => p.map(l => l.id === data.id ? { ...l, x_percent: data.x_percent, y_percent: data.y_percent } : l))
+    if (action === 'event_add') setEvents(p => [...p, data])
+    if (action === 'event_update') setEvents(p => p.map(e => e.id === data.id ? data : e))
+    if (action === 'event_delete') setEvents(p => p.filter(e => e.id !== data.id))
+    if (action === 'event_move') setEvents(p => p.map(e => e.id === data.id ? { ...e, x_percent: data.x_percent, y_percent: data.y_percent } : e))
   }
 
-  const handleSaveLoc = async () => {
-    try {
-      const res = await api.put(`/api/world/locations/${editingLoc.id}`, locForm)
-      setLocations(prev => prev.map(l => l.id === editingLoc.id ? res.data : l))
-      setEditingLoc(null)
-      showSuccess('Location saved!')
-    } catch (err) { console.error(err) }
-  }
-
+  const currentMap = maps.find(m => m.key === selectedMap)
   const s2 = {
-    section: { display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '750px' },
-    title: { fontFamily: 'monospace', fontSize: '1rem', color: '#e8e8e0', letterSpacing: '0.1em', marginBottom: '0.5rem' },
-    card: { background: '#0a0a12', border: '1px solid #1a1a2e', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' },
-    mapThumb: { width: '120px', height: '80px', objectFit: 'cover', border: '1px solid #1a1a2e', flexShrink: 0, background: '#050510' },
     label: { fontFamily: 'monospace', fontSize: '0.65rem', color: '#888', letterSpacing: '0.2em', marginBottom: '0.3rem' },
-    input: { background: '#0a0a12', border: '1px solid #1a1a2e', color: '#e8e8e0', fontFamily: 'monospace', fontSize: '0.85rem', padding: '0.5rem 0.75rem', outline: 'none', width: '100%' },
-    btn: { background: 'transparent', border: '1px solid #4fc3f7', color: '#4fc3f7', fontFamily: 'monospace', fontSize: '0.7rem', letterSpacing: '0.15em', padding: '0.4rem 0.8rem', cursor: 'pointer' },
-    dangerBtn: { background: 'transparent', border: '1px solid #ff4444', color: '#ff4444', fontFamily: 'monospace', fontSize: '0.7rem', letterSpacing: '0.15em', padding: '0.4rem 0.8rem', cursor: 'pointer' },
+    mapThumb: { width: '120px', height: '80px', objectFit: 'cover', border: '1px solid #1a1a2e', flexShrink: 0, background: '#050510' },
   }
 
   if (loading) return <p style={{ fontFamily: 'monospace', color: '#888', fontSize: '0.7rem' }}>Loading...</p>
 
   return (
-    <div style={s2.section}>
-      <h2 style={{ fontFamily: 'monospace', fontSize: '1.4rem', color: '#e8e8e0', letterSpacing: '0.1em' }}>WORLD MAPS</h2>
-      <p style={{ fontFamily: 'monospace', fontSize: '0.65rem', color: '#444', letterSpacing: '0.1em' }}>// Upload map images for the world and each continent</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '1100px' }}>
+      <h2 style={{ fontFamily: 'monospace', fontSize: '1.4rem', color: '#e8e8e0', letterSpacing: '0.1em' }}>MAP EDITOR</h2>
 
-      {MAP_KEYS.map(({ key, label }) => {
-        const map = maps.find(m => m.key === key)
-        return (
-          <div key={key} style={s2.card}>
-            {map?.image_url
-              ? <img src={map.image_url} alt={label} style={s2.mapThumb} />
-              : <div style={{ ...s2.mapThumb, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ fontFamily: 'monospace', fontSize: '0.5rem', color: '#333' }}>NO IMAGE</p></div>
-            }
-            <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#e8e8e0', marginBottom: '0.5rem' }}>{label}</p>
-              <input type="file" accept="image/*" onChange={e => handleMapUpload(key, e)} style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', cursor: 'pointer' }} />
-            </div>
-          </div>
-        )
-      })}
+      {/* Map selector + upload */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        {MAP_KEYS.map(({ key, label }) => (
+          <button key={key} onClick={() => setSelectedMap(key)} style={{ background: selectedMap === key ? 'rgba(79,195,247,0.15)' : 'transparent', border: `1px solid ${selectedMap === key ? '#4fc3f7' : '#333'}`, color: selectedMap === key ? '#4fc3f7' : '#888', fontFamily: 'monospace', fontSize: '0.6rem', letterSpacing: '0.15em', padding: '0.3rem 0.65rem', cursor: 'pointer' }}>
+            {label}
+          </button>
+        ))}
+      </div>
 
-      <div style={{ borderTop: '1px solid #0d1117', margin: '1rem 0' }} />
-      <h2 style={{ fontFamily: 'monospace', fontSize: '1.4rem', color: '#e8e8e0', letterSpacing: '0.1em' }}>LOCATION PINS</h2>
-      <p style={{ fontFamily: 'monospace', fontSize: '0.65rem', color: '#444', letterSpacing: '0.1em' }}>// Add images and biography to each location pin</p>
-
-      {editingLoc && (
-        <div style={{ background: '#0a0a12', border: '1px solid #4fc3f7', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <p style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#4fc3f7' }}>EDITING: {editingLoc.name}</p>
-          {[['NAME', 'name'], ['DESCRIPTION', 'description']].map(([lbl, key]) => (
-            <div key={key}>
-              <p style={s2.label}>{lbl}</p>
-              <input style={s2.input} value={locForm[key]} onChange={e => setLocForm(p => ({ ...p, [key]: e.target.value }))} />
-            </div>
-          ))}
-          <div>
-            <p style={s2.label}>BIOGRAPHY</p>
-            <textarea style={{ ...s2.input, resize: 'vertical' }} rows={4} value={locForm.biography} onChange={e => setLocForm(p => ({ ...p, biography: e.target.value }))} />
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <div style={{ flex: 1 }}>
-              <p style={s2.label}>X POSITION — {locForm.x_percent}%</p>
-              <input type="range" min={0} max={100} value={locForm.x_percent} onChange={e => setLocForm(p => ({ ...p, x_percent: Number(e.target.value) }))} style={{ width: '100%', accentColor: '#4fc3f7' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={s2.label}>Y POSITION — {locForm.y_percent}%</p>
-              <input type="range" min={0} max={100} value={locForm.y_percent} onChange={e => setLocForm(p => ({ ...p, y_percent: Number(e.target.value) }))} style={{ width: '100%', accentColor: '#4fc3f7' }} />
-            </div>
-          </div>
-          <div>
-            <p style={s2.label}>UPLOAD IMAGE</p>
-            <input type="file" accept="image/*" onChange={e => handleLocImageUpload(editingLoc.id, e)} style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', cursor: 'pointer' }} />
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button style={s2.btn} onClick={handleSaveLoc}>SAVE</button>
-            <button style={s2.dangerBtn} onClick={() => setEditingLoc(null)}>CANCEL</button>
-          </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#0a0a12', border: '1px solid #1a1a2e', padding: '0.75rem 1rem' }}>
+        {currentMap?.image_url
+          ? <img src={currentMap.image_url} alt={selectedMap} style={s2.mapThumb} />
+          : <div style={{ ...s2.mapThumb, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><p style={{ fontFamily: 'monospace', fontSize: '0.45rem', color: '#333' }}>NO IMAGE</p></div>
+        }
+        <div>
+          <p style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#e8e8e0', marginBottom: '0.4rem' }}>{MAP_KEYS.find(m => m.key === selectedMap)?.label}</p>
+          <input type="file" accept="image/*" onChange={e => handleMapUpload(selectedMap, e)} style={{ fontFamily: 'monospace', fontSize: '0.7rem', color: '#888', cursor: 'pointer' }} />
         </div>
-      )}
+      </div>
 
-      {locations.map(loc => (
-        <div key={loc.id} style={s2.card}>
-          {loc.image_url
-            ? <img src={loc.image_url} alt={loc.name} style={{ width: '70px', height: '70px', objectFit: 'cover', border: '1px solid #1a1a2e', flexShrink: 0 }} />
-            : <div style={{ width: '70px', height: '70px', background: '#050510', border: '1px solid #1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><p style={{ fontFamily: 'monospace', fontSize: '0.45rem', color: '#333' }}>NO IMG</p></div>
-          }
-          <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: '#e8e8e0' }}>{loc.name}</p>
-            <p style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#888', marginTop: '0.2rem' }}>{loc.type} · x:{loc.x_percent} y:{loc.y_percent}</p>
-            {loc.description && <p style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#666', marginTop: '0.2rem' }}>{loc.description}</p>}
-          </div>
-          <button style={s2.btn} onClick={() => { setEditingLoc(loc); setLocForm({ name: loc.name, description: loc.description || '', biography: loc.biography || '', type: loc.type, x_percent: loc.x_percent, y_percent: loc.y_percent }) }}>EDIT</button>
-        </div>
-      ))}
+      {/* Visual pin editor */}
+      <MapPinEditor
+        mapKey={selectedMap}
+        mapUrl={currentMap?.image_url}
+        locations={locations}
+        events={events.filter(e => e.source_type !== 'system')}
+        onUpdate={handlePinUpdate}
+        showSuccess={showSuccess}
+      />
     </div>
   )
 }
