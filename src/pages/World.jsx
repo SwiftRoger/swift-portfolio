@@ -127,9 +127,13 @@ export default function World({ onBack }) {
     Promise.all([
       api.get('/api/world/events'),
       api.get('/api/world/locations'),
-    ]).then(([evRes, locRes]) => {
+      api.get('/api/world/maps'),
+    ]).then(([evRes, locRes, mapsRes]) => {
       setEvents(Array.isArray(evRes.data) ? evRes.data : [])
       setLocations(Array.isArray(locRes.data) ? locRes.data : [])
+      const mapsArr = mapsRes.data || []
+      const worldMap = mapsArr.find(m => m.key === 'world')
+      if (worldMap?.image_url) setWorldMapSrc(worldMap.image_url)
       setLoaded(true)
     }).catch(() => setLoaded(true))
   }, [])
