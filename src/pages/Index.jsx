@@ -1,7 +1,8 @@
-import { useRef, useState, useEffect, Suspense } from 'react'
+import { useRef, useState, useEffect, Suspense, useCallback } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import api from '../utils/api'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import api from '../utils/api'
 
 function ShrineScene() {
   const glowRef = useRef()
@@ -220,12 +221,239 @@ function CharacterCard({ char, onClick }) {
   )
 }
 
+const NPC_NAMES = ['Aldric','Mira','Tobias','Seraphine','Gareth','Lysa','Edwin','Nora','Caspian','Wren','Oswin','Tilda','Brennan','Isolde','Rook','Sage','Dunstan','Petra','Cael','Mab']
+
+const NPC_MESSAGES = [
+  "Did you see the fog rolling in from the north this morning?",
+  "Market prices for grain went up again. Third time this season.",
+  "My boots are soaked through. This rain won't let up.",
+  "Heard there was a fight down at the docks last night.",
+  "The baker ran out of bread before midday. Can you believe it?",
+  "Strange lights over the eastern ridge last night.",
+  "My cat hasn't come home in three days. I'm worried.",
+  "The well by the south gate is tasting strange again.",
+  "Caravans from the middle lands are delayed. Again.",
+  "Someone left a lantern burning all night outside the chapel.",
+  "The blacksmith's apprentice ran off with a merchant's daughter.",
+  "Frost on the ground this morning. Unusual for this time of year.",
+  "Heard the old tower is haunted again. Third family to leave.",
+  "The fishing boats came back half empty today.",
+  "My neighbor's dog barks every night at the same hour. Unsettling.",
+  "They say the road to Frostgate is washed out.",
+  "A stranger passed through yesterday. Wouldn't say where from.",
+  "The harvest festival is coming early this year.",
+  "Someone stole three chickens from the farm on the hill.",
+  "The healer says she's running low on herbs. Bad sign.",
+  "Wind's picking up from the west. Storm coming.",
+  "Saw a raven sitting on the chapel roof for an hour.",
+  "The old bridge creaks something awful these days.",
+  "Two guards were reassigned to the northern post overnight.",
+  "Rumor has it the lord is expecting visitors from the capital.",
+  "The inn was full last night. Haven't seen that in months.",
+  "Someone found old coins near the ruins. Could be anything.",
+  "The river's running higher than usual for this season.",
+  "My knee's been aching. Rain's definitely coming.",
+  "Three ships in the harbor today. All flying unfamiliar colors.",
+  "The chandler raised his prices again. Everything's getting dear.",
+  "Saw smoke from the direction of Saltgrimm. Hope it's nothing.",
+  "The children found something in the woods. Won't say what.",
+  "A traveling performer set up in the square this morning.",
+  "The old woman on the hill hasn't been seen in a week.",
+  "Trade routes from the south have been quiet lately.",
+  "My roof is leaking again. Third patch this year.",
+  "The garrison doubled the night watch last week.",
+  "Found a dead crow outside my door this morning.",
+  "The priest says prayers for travelers have doubled.",
+  "Something's wrong with the horses at the stable. They're restless.",
+  "Heard a horn in the distance last night. Far off.",
+  "The apothecary is out of fever remedy. Worrying time of year.",
+  "Two merchants argued in the square for half the morning.",
+  "The road crews haven't been seen in weeks.",
+  "My fire keeps going out. The wood is damp.",
+  "Soldiers passed through without stopping. Moving fast.",
+  "The cobbler says leather is getting scarce.",
+  "Odd smell near the eastern gate. Can't place it.",
+  "The stars were strange last night. Couldn't sleep.",
+  "Someone painted a symbol on the granary door overnight.",
+  "The miller's been grinding late into the night lately.",
+  "A child claims to have seen something in the fog.",
+  "The dye shortage is making the weavers furious.",
+  "Three travelers arrived at dusk and left before dawn.",
+  "The guard captain looks worried. Won't say why.",
+  "My garden hasn't grown right since the late frost.",
+  "The water tastes of iron today. Just me?",
+  "Heard wolves closer to town last night than usual.",
+  "The tanner says hides are coming in thin this season.",
+  "Something moved the boundary stones on the east field.",
+  "The church bell rang at an odd hour last night.",
+  "An old map was found in the demolished warehouse wall.",
+  "The herbalist refuses to go near the forest anymore.",
+  "There's a new face at the tavern every night this week.",
+  "The smithy worked through the night. Something urgent.",
+  "Found tracks in the mud I couldn't identify.",
+  "The merchant from Mirrordeep hasn't come back yet.",
+  "Three days of clear sky. Almost suspicious.",
+  "The quarry workers stopped showing up for their shifts.",
+  "Heard singing from the empty house on the corner.",
+  "The old oath stone by the crossroads has been moved.",
+  "My sister says the same dream three nights running.",
+  "The road patrols have been extended to the outer farms.",
+  "Someone left flowers at the old memorial again.",
+  "The tide came in wrong yesterday. Ask any fisherman.",
+  "The cartwright finished a big order. For whom, he won't say.",
+  "Fog's been thick for four days straight now.",
+  "The young ones are restless. Feel it in the air.",
+  "A letter arrived at the chapel addressed to no one living.",
+  "The price of salt has doubled since last month.",
+  "Two farmhands quit without giving reason.",
+  "The old watch post on the hill has a light in it again.",
+  "Heard horses in the night but saw nothing in the morning.",
+  "The crop rotation failed on the west fields. Worrying.",
+  "Someone's been asking questions about the old families.",
+  "The traveling tinker left without finishing his rounds.",
+  "A fire broke out near the warehouse district. Contained quickly.",
+  "The courier service has been unreliable lately.",
+  "Ice on the puddles this morning despite the season.",
+  "The constable looked grave at morning roll call.",
+  "They say the old road south is passable again.",
+  "A dog has been howling near the cemetery for three nights.",
+  "The rope-maker ran out of stock. Unusual.",
+  "Noticed fewer birds this week. Quiet skies.",
+  "The miller found a broken lock on the store room.",
+  "New faces at the morning market. Watching more than buying.",
+  "The lanterns on the main road keep going out.",
+  "Heard thunder to the north but the sky was clear.",
+  "The porter at the gate has been asking extra questions.",
+  "Something heavy was moved through town before dawn.",
+]
+
+function NPCChat() {
+  const [messages, setMessages] = useState([])
+  const scrollRef = useRef(null)
+
+  const addMessage = useCallback(() => {
+    const name = NPC_NAMES[Math.floor(Math.random() * NPC_NAMES.length)]
+    const text = NPC_MESSAGES[Math.floor(Math.random() * NPC_MESSAGES.length)]
+    const now = new Date()
+    const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+    setMessages(prev => [...prev.slice(-60), { id: Date.now(), name, text, time }])
+  }, [])
+
+  useEffect(() => {
+    // Seed with initial messages
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => addMessage(), i * 200)
+    }
+    // Add new message every 4-8 seconds
+    const interval = setInterval(() => addMessage(), 4000 + Math.random() * 4000)
+    return () => clearInterval(interval)
+  }, [addMessage])
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'rgba(4,4,12,0.85)', border: '1px solid rgba(192,176,255,0.08)' }}>
+      <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid rgba(192,176,255,0.08)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#44ff88', animation: 'pulse 2s ease infinite' }} />
+        <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', color: 'rgba(192,176,255,0.4)', letterSpacing: '0.25em' }}>// NPC CHATTER · LIVE</p>
+      </div>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
+        {messages.map(msg => (
+          <div key={msg.id} style={{ padding: '0.35rem 0.85rem', animation: 'fadeInUp 0.3s ease' }}>
+            <span style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.48rem', color: 'rgba(192,176,255,0.25)', marginRight: '0.4rem' }}>{msg.time}</span>
+            <span style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.52rem', color: 'rgba(192,176,255,0.6)', marginRight: '0.4rem' }}>{msg.name}:</span>
+            <span style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.72rem', color: 'rgba(220,215,235,0.7)' }}>{msg.text}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function UserChat({ user }) {
+  const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
+  const [posting, setPosting] = useState(false)
+  const [error, setError] = useState('')
+  const scrollRef = useRef(null)
+
+  useEffect(() => {
+    api.get('/api/world/chat').then(r => setMessages(r.data || [])).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+  }, [messages])
+
+  const handlePost = async () => {
+    if (!input.trim()) return
+    setPosting(true); setError('')
+    try {
+      const res = await api.post('/api/world/chat', { message: input.trim() })
+      setMessages(prev => [...prev, res.data])
+      setInput('')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to post')
+    } finally { setPosting(false) }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'rgba(4,4,12,0.85)', border: '1px solid rgba(192,176,255,0.08)' }}>
+      <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid rgba(192,176,255,0.08)' }}>
+        <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', color: 'rgba(192,176,255,0.4)', letterSpacing: '0.25em' }}>// TRAVELLER LOG</p>
+      </div>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
+        {messages.length === 0 && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', color: 'rgba(192,176,255,0.15)', letterSpacing: '0.15em', padding: '1rem', textAlign: 'center' }}>// No messages yet. Be the first.</p>}
+        {messages.map(msg => (
+          <div key={msg.id} style={{ padding: '0.4rem 0.85rem', borderLeft: `2px solid ${msg.user_id === user?.id ? 'rgba(192,176,255,0.4)' : 'rgba(192,176,255,0.1)'}`, marginBottom: '0.25rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline', marginBottom: '0.15rem' }}>
+              <span style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.52rem', color: msg.user_id === user?.id ? 'rgba(192,176,255,0.8)' : 'rgba(192,176,255,0.45)' }}>{msg.username}</span>
+              <span style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.42rem', color: 'rgba(192,176,255,0.2)' }}>{new Date(msg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+            </div>
+            <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.72rem', color: 'rgba(220,215,235,0.7)', lineHeight: 1.5 }}>{msg.message}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: '0.75rem', borderTop: '1px solid rgba(192,176,255,0.08)' }}>
+        {!user && <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.48rem', color: 'rgba(192,176,255,0.25)', letterSpacing: '0.15em', textAlign: 'center' }}>// Sign in to leave a message</p>}
+        {user && (
+          <>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value.slice(0, 100))}
+                onKeyDown={e => e.key === 'Enter' && handlePost()}
+                placeholder="Leave a message..."
+                style={{ flex: 1, background: 'rgba(192,176,255,0.04)', border: '1px solid rgba(192,176,255,0.1)', color: '#e8e0f0', fontFamily: '"Space Mono",monospace', fontSize: '0.65rem', padding: '0.4rem 0.6rem', outline: 'none' }}
+              />
+              <button onClick={handlePost} disabled={posting || !input.trim()} style={{ background: 'transparent', border: '1px solid rgba(192,176,255,0.2)', color: 'rgba(192,176,255,0.6)', fontFamily: '"Space Mono",monospace', fontSize: '0.5rem', padding: '0.4rem 0.6rem', cursor: 'pointer' }}>
+                {posting ? '...' : 'POST'}
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem' }}>
+              <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.42rem', color: error ? '#ff6b6b' : 'rgba(192,176,255,0.2)' }}>{error || '// once per day'}</p>
+              <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.42rem', color: 'rgba(192,176,255,0.2)' }}>{input.length}/100</p>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+
 export default function Index({ onBack }) {
   const [characters, setCharacters] = useState([])
   const [selected, setSelected] = useState(null)
   const [filter, setFilter] = useState('all')
   const [tunneling, setTunneling] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const { user } = useAuth()
 
   useEffect(() => {
     api.get('/api/characters').then(r => { setCharacters(Array.isArray(r.data) ? r.data : []); setLoaded(true) }).catch(() => setLoaded(true))
@@ -269,8 +497,8 @@ export default function Index({ onBack }) {
       </div>
 
       {/* Content */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 10, overflowY: 'auto', paddingTop: '6rem', paddingBottom: '3rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 3rem' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 10, display: 'grid', gridTemplateColumns: '1fr 280px', paddingTop: '6rem', paddingBottom: '0' }}>
+        <div style={{ overflowY: 'auto', padding: '0 2rem 3rem 3rem' }}>
 
           {/* Title + filter */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem', animation: 'fadeInUp 0.8s ease forwards', animationDelay: '0.2s', opacity: 0 }}>
@@ -302,6 +530,12 @@ export default function Index({ onBack }) {
           <div style={{ textAlign: 'center', marginTop: '3rem' }}>
             <p style={{ fontFamily: '"Noto Serif JP",serif', fontSize: '0.75rem', color: 'rgba(192,176,255,0.06)', letterSpacing: '0.3em' }}>神社</p>
           </div>
+        </div>
+
+        {/* Right panel */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', height: '100%', overflow: 'hidden' }}>
+          <div style={{ flex: 1, overflow: 'hidden' }}><NPCChat /></div>
+          <div style={{ flex: 1, overflow: 'hidden' }}><UserChat user={user} /></div>
         </div>
       </div>
 

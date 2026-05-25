@@ -734,6 +734,42 @@ app.post('/api/world/events/:id/image', auth, async (req, res) => {
 })
 
 
+// ── WORLD CHAT ────────────────────────────────────────
+app.get('/api/world/chat', async (req, res) => {
+  try {
+    const rows = await sql`SELECT * FROM world_chat ORDER BY created_at DESC LIMIT 50`
+    res.json(rows)
+  } catch { res.status(500).json({ message: 'Server error' }) }
+})
+
+app.post('/api/world/chat', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId
+    const { message } = req.body
+    if (!message || message.trim().length === 0) return res.status(400).json({ message: 'Message required' })
+    if (message.length > 100) return res.status(400).json({ message: 'Message too long' })
+
+    // Check if user already posted today
+    const today = await sql`
+      SELECT id FROM world_chat 
+      WHERE user_id = ${userId} 
+      AND created_at > NOW() - INTERVAL '24 hours'
+      LIMIT 1`
+    if (today.length > 0) return res.status(429).json({ message: 'You can only post once per day' })
+
+    const user = await sql`SELECT username FROM users WHERE id = ${userId}`
+    const rows = await sql`
+      INSERT INTO world_chat (user_id, username, message)
+      VALUES (${userId}, ${user[0].username}, ${message.trim()})
+      RETURNING *`
+    res.json(rows[0])
+  } catch (err) {
+    console.error('Chat error:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
+})
+
+
 
 // ── USER PROFILE ─────────────────────────────────────
 app.put('/api/auth/profile', auth, async (req, res) => {
