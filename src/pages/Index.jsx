@@ -453,13 +453,18 @@ export default function Index({ onBack }) {
   const [filter, setFilter] = useState('all')
   const [tunneling, setTunneling] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [search, setSearch] = useState('')
   const { user } = useAuth()
 
   useEffect(() => {
     api.get('/api/characters').then(r => { setCharacters(Array.isArray(r.data) ? r.data : []); setLoaded(true) }).catch(() => setLoaded(true))
   }, [])
 
-  const filtered = filter === 'all' ? characters : characters.filter(c => c.type === filter)
+  const filtered = characters.filter(c => {
+    const matchFilter = filter === 'all' || c.type === filter
+    const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase())
+    return matchFilter && matchSearch
+  })
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#04040a', position: 'relative', overflow: 'hidden' }}>
@@ -506,7 +511,13 @@ export default function Index({ onBack }) {
               <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(192,176,255,0.25)', letterSpacing: '0.5em', marginBottom: '0.5rem' }}>// THE LAND OF THREE</p>
               <h1 style={{ fontFamily: '"Noto Serif JP",serif', fontSize: 'clamp(1.8rem,3vw,2.8rem)', color: '#e8e0f8', fontWeight: 300 }}>Character Index</h1>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search..."
+                style={{ background: 'transparent', border: '1px solid rgba(192,176,255,0.1)', color: '#e8e0f0', fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', padding: '0.35rem 0.6rem', outline: 'none', width: '120px', letterSpacing: '0.1em' }}
+              />
               {['all', 'original', 'commissioned'].map(f => (
                 <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
                   {f === 'all' ? 'ALL' : f === 'original' ? 'OC' : 'CM'}
