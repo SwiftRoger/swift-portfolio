@@ -95,7 +95,7 @@ function DispatchFeed({ eventsByRealm, onSelect }) {
 }
 
 export default function World({ onBack }) {
-  const [view, setView] = useState('overview')
+  const [view, setView] = useState('map')
   const [realmId, setRealmId] = useState(null)
   const [territoryId, setTerritoryId] = useState(null)
   const [events, setEvents] = useState([])
