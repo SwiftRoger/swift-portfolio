@@ -478,11 +478,18 @@ app.put('/api/world/events/:id', auth, async (req, res) => {
   try {
     const rows = await sql`
       UPDATE portfolio_world_events
-      SET headline=${headline}, summary=${summary}, location_name=${location_name},
-          x_percent=${x_percent}, y_percent=${y_percent}, source_type=${source_type}
+      SET headline = COALESCE(${headline}, headline),
+          summary = COALESCE(${summary}, summary),
+          location_name = COALESCE(${location_name}, location_name),
+          x_percent = COALESCE(${x_percent}, x_percent),
+          y_percent = COALESCE(${y_percent}, y_percent),
+          source_type = COALESCE(${source_type}, source_type)
       WHERE id=${req.params.id} RETURNING *`
     res.json(rows[0])
-  } catch { res.status(500).json({ message: 'Server error' }) }
+  } catch (err) {
+    console.error('Update event error:', err)
+    res.status(500).json({ message: 'Server error' })
+  }
 })
 
 app.delete('/api/world/events/:id', auth, async (req, res) => {

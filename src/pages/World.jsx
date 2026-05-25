@@ -111,6 +111,7 @@ export default function World({ onBack }) {
 
   const activeRealm = realmId ? getRealm(realmId) : null
   const activeTerritory = territoryId ? getContinent(territoryId) : null
+  const [worldMapSrc, setWorldMapSrc] = useState(WORLD_MAP_SRC)
 
   useEffect(() => {
     const tick = setInterval(() => setClock(getWorldClock()), 1000)
@@ -381,7 +382,7 @@ export default function World({ onBack }) {
               <div className="world-map-frame">
                 {!overviewMapOk && <div className="world-map-frame__fallback" />}
                 <img
-                  src={WORLD_MAP_SRC}
+                  src={worldMapSrc}
                   alt=""
                   className="world-map-frame__img"
                   style={{ display: overviewMapOk ? 'block' : 'none', opacity: 0.35 }}
@@ -423,7 +424,7 @@ export default function World({ onBack }) {
               <WorldMapBoard
                 key={`map-${view}-${realmId || ''}-${territoryId || ''}`}
                 mode={view === 'continent' ? 'realm' : 'full'}
-                mapSrc={WORLD_MAP_SRC}
+                mapSrc={worldMapSrc}
                 realm={view === 'continent' ? activeRealm : null}
                 mapZoom={view === 'territory' && activeTerritory
                   ? { origin: activeTerritory.mapFocus, scale: 2.5 }
