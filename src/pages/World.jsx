@@ -106,8 +106,7 @@ export default function World({ onBack }) {
   const [hoveredPin, setHoveredPin] = useState(null)
   const [clock, setClock] = useState(() => getWorldClock())
   const [weather, setWeather] = useState(null)
-  const [activeRealmHover, setActiveRealmHover] = useState(null)
-  const [overviewMapOk, setOverviewMapOk] = useState(false)
+  
 
   const activeRealm = realmId ? getRealm(realmId) : null
   const activeTerritory = territoryId ? getContinent(territoryId) : null
@@ -354,12 +353,12 @@ export default function World({ onBack }) {
               type="button"
               className="world-return"
               onClick={() => {
-                if (view === 'overview') setTunneling(true)
+                if (view === 'map') setTunneling(true)
                 else if (view === 'territory') openWorldMap()
                 else backToOverview()
               }}
             >
-              {view === 'overview' ? '← STATION' : view === 'territory' ? '← WORLD MAP' : '← OVERVIEW'}
+              {view === 'map' ? '← STATION' : view === 'territory' ? '← WORLD MAP' : '← MAP'}
             </button>
           </div>
           <div className="world-topbar-title">
@@ -378,47 +377,7 @@ export default function World({ onBack }) {
           <div className="world-map-col">
             <WorldCommandClock clock={clock} weather={weather} />
 
-            {view === 'overview' && (
-              <div className="world-map-frame">
-                {!overviewMapOk && <div className="world-map-frame__fallback" />}
-                <img
-                  src={worldMapSrc}
-                  alt=""
-                  className="world-map-frame__img"
-                  style={{ display: overviewMapOk ? 'block' : 'none', opacity: 0.35 }}
-                  onLoad={() => setOverviewMapOk(true)}
-                  onError={() => setOverviewMapOk(false)}
-                />
-                <div className="world-map-frame__grid" />
-                <div className="world-continents" style={{ zIndex: 5 }}>
-                  {REALMS.map(realm => {
-                    const count = eventsByRealm.find(r => r.id === realm.id)?.items.length || 0
-                    return (
-                      <div
-                        key={realm.id}
-                        className={`world-continent ${activeRealmHover === realm.id ? 'world-continent--active' : ''}`}
-                        style={{ '--glow': realm.glow, pointerEvents: 'all' }}
-                        onClick={() => openRealm(realm.id)}
-                        onMouseEnter={() => setActiveRealmHover(realm.id)}
-                        onMouseLeave={() => setActiveRealmHover(null)}
-                      >
-                        <div className="world-continent__label">
-                          <p className="world-continent__name" style={{ color: realm.accent }}>{realm.name}</p>
-                          <p className="world-continent__sub" style={{ color: realm.accent }}>
-                            {continentsInRealm(realm.id).map(c => c.name).join(' · ')}
-                          </p>
-                        </div>
-                        <span className="world-continent__badge" style={{ color: realm.accent, borderColor: realm.border }}>
-                          {count} SIGNALS
-                        </span>
-                        <span className="world-continent__enter">ENTER REGION →</span>
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="world-map-frame__vignette" />
-              </div>
-            )}
+            
 
             {(view === 'map' || view === 'continent' || view === 'territory') && (
               <WorldMapBoard
