@@ -255,6 +255,75 @@ export default function Bio({ onBack }) {
           <p style={{ fontFamily: '"Space Mono",monospace', fontSize: '0.55rem', color: 'rgba(200,184,154,0.25)', letterSpacing: '0.4em' }}>// PLATFORM 01 — BIO</p>
         </div>
 
+{/* Character figure — left side */}
+        <div style={{
+          position: 'absolute', left: '6rem', top: '50%', transform: 'translateY(-50%)',
+          width: 'min(380px, 35vw)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+          animation: 'fadeInUp 1s ease forwards',
+          animationDelay: '0.5s',
+          opacity: 0,
+        }}
+          onMouseMove={e => {
+            const el = e.currentTarget
+            const rect = el.getBoundingClientRect()
+            const x = (e.clientX - rect.left - rect.width / 2) / rect.width
+            const y = (e.clientY - rect.top - rect.height / 2) / rect.height
+            el.querySelector('.fig-img').style.transform = `translateY(0px) rotate(${x * 3}deg)`
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.querySelector('.fig-img').style.transform = 'translateY(0px) rotate(0deg)'
+          }}
+        >
+          {/* Glow base */}
+          <div style={{
+            position: 'absolute', bottom: '5%', left: '50%', transform: 'translateX(-50%)',
+            width: '60%', height: '40px',
+            background: 'radial-gradient(ellipse, rgba(180,40,40,0.35) 0%, transparent 70%)',
+            filter: 'blur(12px)',
+            animation: 'breatheGlow 3s ease infinite',
+          }} />
+          {/* Secondary purple glow */}
+          <div style={{
+            position: 'absolute', bottom: '8%', left: '50%', transform: 'translateX(-50%)',
+            width: '40%', height: '60px',
+            background: 'radial-gradient(ellipse, rgba(120,60,200,0.2) 0%, transparent 70%)',
+            filter: 'blur(20px)',
+            animation: 'breatheGlow 4s ease infinite',
+          }} />
+          {/* The figure */}
+          <img
+            className="fig-img"
+            src="/author figure.png"
+            alt="Swift Caulfield"
+            style={{
+              width: '100%',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 0 30px rgba(180,40,40,0.3)) drop-shadow(0 0 60px rgba(120,60,200,0.15))',
+              animation: 'float 6s ease-in-out infinite',
+              transition: 'transform 0.3s ease',
+            }}
+          />
+          {/* Particles */}
+          {[...Array(8)].map((_, i) => (
+            <div key={i} style={{
+              position: 'absolute',
+              width: `${2 + Math.random() * 3}px`,
+              height: `${2 + Math.random() * 3}px`,
+              borderRadius: '50%',
+              background: i % 2 === 0 ? 'rgba(180,40,40,0.6)' : 'rgba(120,60,200,0.5)',
+              left: `${10 + Math.random() * 80}%`,
+              top: `${20 + Math.random() * 60}%`,
+              animation: `particle${i % 3} ${4 + Math.random() * 4}s ease-in-out infinite`,
+              animationDelay: `${Math.random() * 3}s`,
+            }} />
+          ))}
+        </div>
+
+
+
+
         {/* Content card — right side */}
         <div style={{
           position: 'absolute', right: '4rem', top: '50%', transform: 'translateY(-50%)',
