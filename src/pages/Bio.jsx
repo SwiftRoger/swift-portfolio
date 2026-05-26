@@ -263,8 +263,8 @@ export default function Bio({ onBack }) {
 
 {/* Character figure — left side */}
         <div style={{
-          position: 'absolute', left: '5rem', top: '50%', transform: 'translateY(-55%)',
-          width: 'min(320px, 28vw)',
+          position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -55%)',
+          width: 'min(480px, 38vw)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           pointerEvents: 'none',
           animation: 'fadeInUp 1s ease forwards',
@@ -308,7 +308,7 @@ export default function Bio({ onBack }) {
             style={{
               width: '100%',
               objectFit: 'contain',
-              mixBlendMode: 'lighten',
+              mixBlendMode: 'screen',
               filter: 'drop-shadow(0 0 30px rgba(180,40,40,0.4)) drop-shadow(0 0 80px rgba(120,60,200,0.2)) brightness(1.1)',
               animation: 'float 6s ease-in-out infinite',
               transition: 'transform 0.3s ease',
