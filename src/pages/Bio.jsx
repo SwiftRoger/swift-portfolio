@@ -222,6 +222,12 @@ export default function Bio({ onBack }) {
         @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
         @keyframes tunnelExpand { from{opacity:0} to{opacity:1} }
+        @keyframes float { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-18px)} }
+        @keyframes breatheGlow { 0%,100%{opacity:0.6; transform:translateX(-50%) scaleX(1)} 50%{opacity:1; transform:translateX(-50%) scaleX(1.2)} }
+        @keyframes particle0 { 0%,100%{transform:translateY(0) translateX(0); opacity:0.6} 50%{transform:translateY(-20px) translateX(8px); opacity:0.2} }
+        @keyframes particle1 { 0%,100%{transform:translateY(0) translateX(0); opacity:0.4} 50%{transform:translateY(-30px) translateX(-10px); opacity:0.1} }
+        @keyframes particle2 { 0%,100%{transform:translateY(0) translateX(0); opacity:0.5} 50%{transform:translateY(-15px) translateX(5px); opacity:0.2} }
+
         @keyframes grain { 0%,100%{transform:translate(0,0)} 10%{transform:translate(-1%,-1%)} 50%{transform:translate(1%,1%)} }
         .return-btn { background:transparent; border:1px solid rgba(200,184,154,0.2); color:#c8b89a; font-family:'Space Mono',monospace; font-size:0.6rem; letter-spacing:0.3em; padding:0.6rem 1.2rem; cursor:pointer; transition:all 0.3s; }
         .return-btn:hover { border-color:rgba(200,184,154,0.6); opacity:1; }
@@ -257,14 +263,16 @@ export default function Bio({ onBack }) {
 
 {/* Character figure — left side */}
         <div style={{
-          position: 'absolute', left: '6rem', top: '50%', transform: 'translateY(-50%)',
-          width: 'min(380px, 35vw)',
+          position: 'absolute', left: '5rem', top: '50%', transform: 'translateY(-55%)',
+          width: 'min(320px, 28vw)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           pointerEvents: 'none',
           animation: 'fadeInUp 1s ease forwards',
           animationDelay: '0.5s',
           opacity: 0,
+          zIndex: 5,
         }}
+
           onMouseMove={e => {
             const el = e.currentTarget
             const rect = el.getBoundingClientRect()
@@ -300,7 +308,8 @@ export default function Bio({ onBack }) {
             style={{
               width: '100%',
               objectFit: 'contain',
-              filter: 'drop-shadow(0 0 30px rgba(180,40,40,0.3)) drop-shadow(0 0 60px rgba(120,60,200,0.15))',
+              mixBlendMode: 'lighten',
+              filter: 'drop-shadow(0 0 30px rgba(180,40,40,0.4)) drop-shadow(0 0 80px rgba(120,60,200,0.2)) brightness(1.1)',
               animation: 'float 6s ease-in-out infinite',
               transition: 'transform 0.3s ease',
             }}
